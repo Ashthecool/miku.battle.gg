@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrono-Battle: Unified Nexus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="flex">
+
+    <!-- SIDEBAR (Fixed) -->
+    <aside id="sidebar" class="fixed top-0 left-0 bottom-0 w-64 flex flex-col border-r border-white/10 bg-[#13111c] z-50">
+        <div class="h-20 flex items-center px-6 border-b border-white/5">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <i data-lucide="layers" class="text-white w-5 h-5"></i>
+                </div>
+                <span class="font-bold text-lg tracking-tighter uppercase italic">Nexus.IO</span>
+            </div>
+        </div>
+
+        <nav class="py-4 space-y-1 flex-1">
+            <button onclick="showScreen('lobby')" id="btn-lobby" class="nav-btn active w-full flex items-center gap-3 px-6 py-3 text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-all text-left">
+                <i data-lucide="home" class="w-4 h-4"></i> Lobby
+            </button>
+            <button onclick="showScreen('vault')" id="btn-vault" class="nav-btn w-full flex items-center gap-3 px-6 py-3 text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-all text-left">
+                <i data-lucide="database" class="w-4 h-4"></i> Character Vault
+            </button>
+            <button onclick="showScreen('arena')" id="btn-arena" class="nav-btn w-full flex items-center gap-3 px-6 py-3 text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-all text-left">
+                <i data-lucide="swords" class="w-4 h-4"></i> Battle Arena
+            </button>
+            
+            <div class="pt-8 pb-2 px-6 text-[10px] uppercase font-bold text-slate-600 tracking-widest">Quick Start</div>
+            <div class="px-4">
+                <button onclick="startBattle()" class="w-full flex items-center justify-center gap-2 px-4 py-4 text-xs bg-indigo-600 text-white font-black rounded-xl hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20">
+                    <i data-lucide="play" class="w-3 h-3"></i> NEW SESSION
+                </button>
+            </div>
+        </nav>
+        
+        <div class="p-6 border-t border-white/5">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                    <i data-lucide="user" class="w-4 h-4 text-indigo-400"></i>
+                </div>
+                <div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">Commander</div>
+                    <div class="text-xs font-bold">User_772</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main id="main-content" class="relative bg-[#0a090f]">
+        
+        <!-- HEADER -->
+        <header id="main-header" class="h-20 flex-shrink-0 flex items-center justify-between px-10 border-b border-white/5 bg-[#13111c]/50 backdrop-blur-xl z-20">
+            <h1 id="screen-title" class="font-black text-2xl uppercase italic tracking-tighter text-indigo-400">Lobby</h1>
+            <div class="flex items-center gap-6">
+                <div class="flex flex-col items-end">
+                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Credits</span>
+                    <span class="text-yellow-500 font-black text-sm">12,450 CR</span>
+                </div>
+                <div class="h-8 w-[1px] bg-white/10"></div>
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Server Online</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 relative overflow-hidden flex flex-col">
+            <!-- LOBBY SCREEN -->
+            <div id="screen-lobby" class="screen p-12 overflow-y-auto">
+                <div class="max-w-4xl mx-auto">
+                    <div class="bg-gradient-to-br from-indigo-900/40 to-transparent border border-indigo-500/20 p-16 rounded-[40px] relative overflow-hidden mb-12 shadow-2xl">
+                        <div class="relative z-10">
+                            <h2 class="text-7xl font-black mb-6 italic tracking-tighter uppercase leading-[0.9]">Nexus<br><span class="text-indigo-500">Dashboard</span></h2>
+                            <p class="text-slate-400 text-xl max-w-md leading-relaxed mb-10">Access your character database or deploy to the combat arena.</p>
+                            <div class="flex gap-4">
+                                <button onclick="showScreen('arena')" class="bg-indigo-600 hover:bg-indigo-500 px-10 py-4 rounded-xl font-black text-lg transition-all shadow-2xl shadow-indigo-600/20 active:scale-95">GO TO ARENA</button>
+                                <button onclick="showScreen('vault')" class="bg-white/5 hover:bg-white/10 border border-white/10 px-10 py-4 rounded-xl font-black text-lg transition-all active:scale-95">VIEW VAULT</button>
+                            </div>
+                        </div>
+                        <div class="absolute -right-20 -bottom-20 opacity-10">
+                            <i data-lucide="shield" class="w-96 h-96"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VAULT SCREEN -->
+            <div id="screen-vault" class="screen hidden-screen p-12 overflow-y-auto">
+                <div class="max-w-7xl mx-auto">
+                    <div class="flex items-center justify-between mb-10">
+                        <div>
+                            <h2 class="text-4xl font-black italic uppercase tracking-tighter">The Vault</h2>
+                            <p class="text-slate-500 text-sm font-semibold" id="vault-count">53 Units Syncronized</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <input type="text" placeholder="Search units..." class="bg-white/5 border border-white/10 px-4 py-2 rounded-lg text-sm outline-none focus:border-indigo-500 transition-all w-64">
+                        </div>
+                    </div>
+                    <div id="vault-grid" class="pb-24"></div>
+                </div>
+            </div>
+
+            <!-- ARENA SCREEN -->
+            <div id="screen-arena" class="screen hidden-screen flex flex-col relative overflow-hidden">
+                <!-- Enemy Side -->
+                <div class="h-[35%] flex flex-col items-center justify-center gap-4 pt-2 bg-red-900/5 flex-shrink-0">
+                    <div class="flex items-center gap-10">
+                        <div class="text-center">
+                            <div id="enemy-hp" class="text-4xl font-black text-red-500">30</div>
+                            <div class="text-[8px] opacity-40 font-bold uppercase tracking-widest">Enemy Nexus</div>
+                        </div>
+                        <div id="enemy-nexus" class="w-14 h-14 rounded-full border-4 border-red-500/20 flex items-center justify-center bg-red-900/10" ondragover="event.preventDefault()" ondrop="dropOnNexus('enemy')">
+                            <i data-lucide="shield-alert" class="w-6 h-6 text-red-500"></i>
+                        </div>
+                        <div class="text-center">
+                            <div id="enemy-hand-count" class="text-xl font-black text-slate-600">4</div>
+                            <div class="text-[8px] opacity-40 font-bold uppercase tracking-widest">Hand</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <div id="enemy-slot-0" class="slot" data-side="enemy" data-idx="0" ondragover="allowDrop(event)" ondrop="dropOnSlot(event)"></div>
+                        <div id="enemy-slot-1" class="slot" data-side="enemy" data-idx="1" ondragover="allowDrop(event)" ondrop="dropOnSlot(event)"></div>
+                        <div id="enemy-slot-2" class="slot" data-side="enemy" data-idx="2" ondragover="allowDrop(event)" ondrop="dropOnSlot(event)"></div>
+                        <div id="enemy-slot-3" class="slot" data-side="enemy" data-idx="3" ondragover="allowDrop(event)" ondrop="dropOnSlot(event)"></div>
+                    </div>
+                </div>
+
+                <!-- Ticker Line -->
+                <div class="ticker-container flex-shrink-0">
+                    <div id="ticker" class="ticker-content">Syncing Arena Data... Welcome Commander... Round 1 Started...</div>
+                </div>
+
+                <!-- Player Side -->
+                <div class="flex-1 flex flex-col items-center justify-between pb-2 overflow-hidden">
+                    <div class="flex gap-3 mt-2">
+                        <div id="player-slot-0" class="slot" data-side="player" data-idx="0" ondragover="allowDrop(event)" ondrop="dropOnSlot(event)"></div>
+                        <div id="player-slot-1" class="slot" data-side="player" data-idx="1" ondragover="allowDrop(event)" ondrop="dropOnSlot(event)"></div>
+                        <div id="player-slot-2" class="slot" data-side="player" data-idx="2" ondragover="allowDrop(event)" ondrop="dropOnSlot(event)"></div>
+                        <div id="player-slot-3" class="slot" data-side="player" data-idx="3" ondragover="allowDrop(event)" ondrop="dropOnSlot(event)"></div>
+                    </div>
+
+                    <div class="flex items-center gap-10 bg-[#13111c]/90 border border-white/10 px-8 py-3 rounded-full backdrop-blur-2xl shadow-2xl z-20">
+                        <div class="text-center">
+                            <div id="player-hp" class="text-3xl font-black text-indigo-500">30</div>
+                            <div class="text-[7px] opacity-40 font-bold uppercase tracking-widest">Nexus</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div id="mana-text" class="text-lg font-black text-indigo-300">1 / 1</div>
+                            <div class="text-[7px] opacity-30 font-black tracking-widest">ENERGY</div>
+                        </div>
+                        <button onclick="endTurn()" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded-full font-black text-[10px] transition-all active:scale-95 shadow-lg shadow-indigo-600/20">
+                            END TURN
+                        </button>
+                    </div>
+
+                    <div id="player-hand" class="flex gap-2 h-106 px-6 w-full justify-center overflow-x-auto pb-4 relative z-10"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="scripts.js"></script>
+</body>
+</html>

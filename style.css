@@ -1,0 +1,313 @@
+:root {
+            --bg-deep: #0a090f;
+            --bg-sidebar: #13111c;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #6366f1;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-deep);
+            color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; 
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Entry Animations */
+        @keyframes quick-flash { 0% { filter: brightness(1); } 50% { filter: brightness(3); } 100% { filter: brightness(1); } }
+        @keyframes shake-flash {
+            0%, 100% { transform: translateX(0); filter: brightness(1); }
+            20% { transform: translateX(-5px); filter: brightness(2); }
+            40% { transform: translateX(5px); }
+            80% { transform: translateX(5px); }
+        }
+        @keyframes bounce-shake {
+            0% { transform: translateY(-50px); opacity: 0; }
+            60% { transform: translateY(0); }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes epic-entry {
+            0% { transform: scale(0.5) rotate(0deg); opacity: 0; }
+            50% { transform: scale(2) rotate(180deg); opacity: 1; z-index: 100; }
+            80% { transform: scale(1) rotate(360deg); }
+            100% { transform: translateY(0); }
+        }
+        @keyframes legendary-glow {
+            0% { box-shadow: 0 0 0 0px rgba(255, 215, 0, 0.8); transform: scale(1); }
+            50% { box-shadow: 0 0 60px 30px rgba(255, 215, 0, 0); transform: scale(1.1); }
+            100% { box-shadow: 0 0 0 0px rgba(255, 215, 0, 0); transform: scale(1); }
+        }
+
+        .anim-common { animation: quick-flash 0.3s ease-out forwards; }
+        .anim-uncommon { animation: shake-flash 0.4s ease-in-out forwards; }
+        .anim-rare { animation: bounce-shake 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .anim-epic { animation: epic-entry 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        .anim-legendary { animation: legendary-glow 1s ease-out forwards; border-color: #fbbf24 !important; }
+
+        @keyframes heal-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); transform: scale(1); }
+            50% { box-shadow: 0 0 0 14px rgba(34, 197, 94, 0); transform: scale(1.02); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); transform: scale(1); }
+        }
+
+        @keyframes attack-swing {
+            0% { transform: translateY(0) rotate(0deg); }
+            30% { transform: translateY(-4px) rotate(-2deg); }
+            60% { transform: translateY(0) rotate(2deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+
+        @keyframes ability-flash {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            50% { box-shadow: 0 0 20px 8px rgba(59, 130, 246, 0.4); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        .animate-heal { animation: heal-pulse 0.7s ease-out forwards; }
+        .animate-attack { animation: attack-swing 0.35s ease-out forwards; }
+        .animate-ability { animation: ability-flash 0.65s ease-in-out forwards; }
+
+        /* Card Styling */
+        .card-nexus {
+            width: 250px;
+            height: 300px;
+            background: #111;
+            border: 2px solid #333;
+            border-radius: 10px;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            padding: 5px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            z-index: 1;
+            user-select: none;
+        }
+
+        .card-nexus:active { cursor: grabbing; }
+
+        .card-vault {
+            width: 250px;
+            height: 300px;
+            padding: 8px;
+        }
+
+        .card-vault .cost-badge {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .card-vault .stat-badge {
+            width: 26px;
+            height: 26px;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .card-vault img {
+            width: 200px !important;
+            height: 200px !important;
+            object-fit: cover;
+            padding: 5px;
+            border-radius: 50px;
+        }
+
+        .card-vault .text-\[7px\] {
+            font-size: 9px;
+        }
+
+        .card-vault .text-\[9px\] {
+            font-size: 11px;
+        }
+
+        .card-vault .text-\[6px\] {
+            font-size: 8px;
+        }
+
+        .rarity-common { border-color: #64748b; }
+        .rarity-uncommon { border-color: #10b981; }
+        .rarity-rare { border-color: #3b82f6; }
+        .rarity-epic { border-color: #a855f7; }
+        .rarity-legendary { border-color: #f59e0b; }
+
+        .stat-badge {
+            position: absolute;
+            bottom: -4px;
+            width: 22px;
+            height: 22px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 800;
+            z-index: 20;
+        }
+        .atk-badge { left: -4px; background: #ef4444; }
+        .hp-badge { right: -4px; background: #22c55e; }
+        
+        .cost-badge {
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            width: 24px;
+            height: 24px;
+            background: #6366f1;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 900;
+            z-index: 30;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .rarity-badge {
+            position: absolute;
+            right: 0;
+            padding: 2px 6px;
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #c7d2fe;
+            z-index: 30;
+        }
+
+        .slot {
+            width: 100px;
+            height: 135px;
+            background: var(--glass);
+            border: 2px dashed var(--glass-border);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .slot.drag-over { background: rgba(99, 102, 241, 0.15); border-color: var(--accent); border-style: solid; transform: scale(1.02); }
+
+        .is-exhausted { opacity: 0.6; filter: grayscale(0.7); cursor: not-allowed; }
+        .is-guard { box-shadow: 0 0 15px #f59e0b; }
+
+        /* Ticker Log */
+        .ticker-container {
+            width: 100%;
+            height: 30px;
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.05), transparent);
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            white-space: nowrap;
+            border-top: 1px solid var(--glass-border);
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .ticker-content {
+            display: inline-block;
+            padding-left: 100%;
+            animation: ticker 25s linear infinite;
+            font-size: 10px;
+            font-weight: 600;
+            color: #a5b4fc;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        @keyframes ticker { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+
+        .screen { transition: opacity 0.3s ease; height: calc(100vh - 80px); width: 100%; overflow-y: auto; }
+        #screen-arena { overflow: visible !important; }
+        #player-hand { overflow: visible !important; z-index: 100 !important; }
+        .slot { overflow: visible !important; }
+        .hidden-screen { display: none !important; pointer-events: none; }
+
+        /* Sidebar active states */
+        .nav-btn.active { background: rgba(99, 102, 241, 0.1); color: #818cf8; border-right: 2px solid #6366f1; border-radius: 0; }
+        
+        /* Layout stabilization */
+        #main-content {
+            margin-left: 16rem;
+            width: calc(100vw - 16rem);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Prevent overlap on the hand */
+        #player-hand {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding-top: 10px; /* Space for the cost badges */
+        }
+        #player-hand::-webkit-scrollbar { display: none; }
+
+        /* Vault Series Headers */
+        .series-header h3 {
+            border-bottom: 2px solid rgba(99, 102, 241, 0.3);
+            padding-bottom: 8px;
+        }
+
+        /* Arena card stacking + focus */
+        #screen-arena {
+            position: relative;
+            z-index: 1;
+            overflow: visible;
+        }
+
+        .slot {
+            position: relative;
+            z-index: 5;
+            overflow: visible;
+        }
+
+        .slot > .card-nexus {
+            width: 100%;
+            height: 100%;
+            min-width: 0;
+            min-height: 0;
+            padding: 3px;
+        }
+
+        .slot > .card-nexus img {
+            width: 86px !important;
+            height: 86px !important;
+            border-radius: 8px;
+            margin: auto;
+        }
+
+        .card-nexus, .card-vault {
+            z-index: 1;
+            position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, z-index 0s;
+            transform-origin: center bottom;
+        }
+
+        .card-nexus img {
+            width: 200px;
+            height: 250px;
+            border-radius: 50px;
+        }
+
+        .card-nexus:hover, .card-vault:hover {
+            z-index: 1000 !important;
+            transform: scale(1.08);
+            box-shadow: 0 18px 28px rgba(0, 0, 0, 0.65);
+        }
+
+        .card-nexus:hover img, .card-vault:hover img {
+            transform: scale(1.10);
+            filter: saturate(1.10);
+        }
+
+        .card-nexus img, .card-vault img {
+            transition: transform 0.2s ease, filter 0.2s ease;
+            transform-origin: center center;
+        }
