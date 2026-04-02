@@ -231,7 +231,33 @@
         /* Sidebar active states */
         .nav-btn.active { background: rgba(99, 102, 241, 0.1); color: #818cf8; border-right: 2px solid #6366f1; border-radius: 0; }
         
-        /* Layout stabilization */
+        /* Sidebar layout and collapse behavior */
+        #sidebar {
+            width: 16rem;
+            transition: width 0.3s ease;
+            overflow: hidden;
+        }
+
+        #sidebar.collapsed {
+            width: 4.75rem;
+        }
+
+        #sidebar.collapsed .sidebar-title,
+        #sidebar.collapsed .sidebar-quickstart-text,
+        #sidebar.collapsed .sidebar-user-text,
+        #sidebar.collapsed .nav-text {
+            display: none !important;
+        }
+
+        #sidebar.collapsed .nav-btn {
+            justify-content: center;
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+            text-align: center;
+        }
+
+        .nav-btn { transition: padding 0.3s ease; }
+
         #main-content {
             margin-left: 16rem;
             width: calc(100vw - 16rem);
@@ -239,6 +265,12 @@
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
+            transition: margin-left 0.3s ease, width 0.3s ease;
+        }
+
+        #main-content.sidebar-collapsed {
+            margin-left: 4.75rem;
+            width: calc(100vw - 4.75rem);
         }
 
         /* Prevent overlap on the hand */

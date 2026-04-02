@@ -89,6 +89,23 @@
             if(id === 'arena' && state.hand.length === 0) startBattleInternal();
         }
 
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('main-content');
+            const toggleIcon = document.querySelector('#sidebar-toggle i');
+
+            sidebar.classList.toggle('collapsed');
+            main.classList.toggle('sidebar-collapsed');
+
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            toggleIcon.dataset.lucide = isCollapsed ? 'chevrons-right' : 'chevrons-left';
+            lucide.createIcons();
+
+            document.querySelectorAll('.nav-text, .sidebar-title, .sidebar-user-text, .sidebar-quickstart-text').forEach(el => {
+                if (isCollapsed) el.classList.add('hidden'); else el.classList.remove('hidden');
+            });
+        }
+
         function renderVault() {
             const grid = document.getElementById('vault-grid');
             grid.innerHTML = '';

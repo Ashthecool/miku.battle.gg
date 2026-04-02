@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chrono-Battle: Unified Nexus</title>
+    <title>miku.battle.gg</title>
+    <link rel="icon" href="https://miku.gg/favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -13,30 +14,33 @@
 
     <!-- SIDEBAR (Fixed) -->
     <aside id="sidebar" class="fixed top-0 left-0 bottom-0 w-64 flex flex-col border-r border-white/10 bg-[#13111c] z-50">
-        <div class="h-20 flex items-center px-6 border-b border-white/5">
+        <div class="h-20 flex items-center justify-between px-4 border-b border-white/5">
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                     <i data-lucide="layers" class="text-white w-5 h-5"></i>
                 </div>
-                <span class="font-bold text-lg tracking-tighter uppercase italic">Nexus.IO</span>
+                <span class="sidebar-title font-bold text-lg tracking-tighter uppercase italic">miku.battle.gg</span>
             </div>
+            <button id="sidebar-toggle" onclick="toggleSidebar()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all" title="Toggle sidebar">
+                <i data-lucide="chevrons-left" class="w-4 h-4"></i>
+            </button>
         </div>
 
         <nav class="py-4 space-y-1 flex-1">
             <button onclick="showScreen('lobby')" id="btn-lobby" class="nav-btn active w-full flex items-center gap-3 px-6 py-3 text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-all text-left">
-                <i data-lucide="home" class="w-4 h-4"></i> Lobby
+                <i data-lucide="home" class="w-4 h-4"></i><span class="nav-text">Lobby</span>
             </button>
             <button onclick="showScreen('vault')" id="btn-vault" class="nav-btn w-full flex items-center gap-3 px-6 py-3 text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-all text-left">
-                <i data-lucide="database" class="w-4 h-4"></i> Character Vault
+                <i data-lucide="database" class="w-4 h-4"></i><span class="nav-text">Character Vault</span>
             </button>
             <button onclick="showScreen('arena')" id="btn-arena" class="nav-btn w-full flex items-center gap-3 px-6 py-3 text-sm font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-all text-left">
-                <i data-lucide="swords" class="w-4 h-4"></i> Battle Arena
+                <i data-lucide="swords" class="w-4 h-4"></i><span class="nav-text">Battle Arena</span>
             </button>
             
-            <div class="pt-8 pb-2 px-6 text-[10px] uppercase font-bold text-slate-600 tracking-widest">Quick Start</div>
+            <div class="pt-8 pb-2 px-6 text-[10px] uppercase font-bold text-slate-600 tracking-widest sidebar-quickstart-text">Quick Start</div>
             <div class="px-4">
                 <button onclick="startBattle()" class="w-full flex items-center justify-center gap-2 px-4 py-4 text-xs bg-indigo-600 text-white font-black rounded-xl hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20">
-                    <i data-lucide="play" class="w-3 h-3"></i> NEW SESSION
+                    <i data-lucide="play" class="w-3 h-3"></i> <span class="nav-text">NEW SESSION</span>
                 </button>
             </div>
         </nav>
@@ -46,7 +50,7 @@
                 <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center">
                     <i data-lucide="user" class="w-4 h-4 text-indigo-400"></i>
                 </div>
-                <div>
+                <div class="sidebar-user-text">
                     <div class="text-[10px] font-bold text-slate-500 uppercase">Commander</div>
                     <div class="text-xs font-bold">User_772</div>
                 </div>
@@ -79,8 +83,8 @@
                 <div class="max-w-4xl mx-auto">
                     <div class="bg-gradient-to-br from-indigo-900/40 to-transparent border border-indigo-500/20 p-16 rounded-[40px] relative overflow-hidden mb-12 shadow-2xl">
                         <div class="relative z-10">
-                            <h2 class="text-7xl font-black mb-6 italic tracking-tighter uppercase leading-[0.9]">Nexus<br><span class="text-indigo-500">Dashboard</span></h2>
-                            <p class="text-slate-400 text-xl max-w-md leading-relaxed mb-10">Access your character database or deploy to the combat arena.</p>
+                            <h2 class="text-7xl font-black mb-6 italic tracking-tighter uppercase leading-[0.9]">MIKU<br><span class="text-indigo-500">BATTLE<span class="text-purple-300">.GG</span></span></h2>
+                            <p class="text-slate-400 text-xl max-w-md leading-relaxed mb-10">Characters from miku.gg now collectable and playable! (Demo Version)</p>
                             <div class="flex gap-4">
                                 <button onclick="showScreen('arena')" class="bg-indigo-600 hover:bg-indigo-500 px-10 py-4 rounded-xl font-black text-lg transition-all shadow-2xl shadow-indigo-600/20 active:scale-95">GO TO ARENA</button>
                                 <button onclick="showScreen('vault')" class="bg-white/5 hover:bg-white/10 border border-white/10 px-10 py-4 rounded-xl font-black text-lg transition-all active:scale-95">VIEW VAULT</button>
