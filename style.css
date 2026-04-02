@@ -273,6 +273,59 @@
             width: calc(100vw - 4.75rem);
         }
 
+        .mobile-sidebar-toggle { display: none; }
+
+        @media (max-width: 768px) {
+            :root { --bg-sidebar: rgba(19, 17, 28, 0.98); }
+            body { overflow: auto; }
+
+            #sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 16rem;
+                z-index: 60;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease, width 0.3s ease;
+                backdrop-filter: blur(8px);
+            }
+
+            #sidebar:not(.collapsed) {
+                transform: translateX(0);
+            }
+
+            #sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+
+            #main-content {
+                margin-left: 0;
+                width: 100vw;
+                min-height: 100vh;
+            }
+
+            #main-content.sidebar-collapsed {
+                margin-left: 0;
+                width: 100vw;
+            }
+
+            .sidebar-title, .sidebar-quickstart-text, .sidebar-user-text, .nav-text { display: block !important; }
+
+            .nav-btn {
+                justify-content: flex-start;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .mobile-sidebar-toggle { display: flex; }
+            #sidebar-toggle { display: none; }
+            #main-header { position: sticky; top: 0; z-index: 50; }
+
+            .screen { padding: 1rem !important; height: calc(100vh - 80px); }
+            .overflow-y-auto { overflow-y: auto !important; }
+        }
+
         /* Prevent overlap on the hand */
         #player-hand {
             scrollbar-width: none;

@@ -93,18 +93,52 @@
             const sidebar = document.getElementById('sidebar');
             const main = document.getElementById('main-content');
             const toggleIcon = document.querySelector('#sidebar-toggle i');
+            const mobileToggleIcon = document.querySelector('#mobile-sidebar-toggle i');
 
             sidebar.classList.toggle('collapsed');
             main.classList.toggle('sidebar-collapsed');
 
             const isCollapsed = sidebar.classList.contains('collapsed');
-            toggleIcon.dataset.lucide = isCollapsed ? 'chevrons-right' : 'chevrons-left';
+
+            if (toggleIcon) {
+                toggleIcon.dataset.lucide = isCollapsed ? 'chevrons-right' : 'chevrons-left';
+            }
+
+            if (mobileToggleIcon) {
+                mobileToggleIcon.dataset.lucide = isCollapsed ? 'menu' : 'x';
+            }
+
             lucide.createIcons();
 
             document.querySelectorAll('.nav-text, .sidebar-title, .sidebar-user-text, .sidebar-quickstart-text').forEach(el => {
-                if (isCollapsed) el.classList.add('hidden'); else el.classList.remove('hidden');
+                if (window.innerWidth > 768) {
+                    if (isCollapsed) el.classList.add('hidden'); else el.classList.remove('hidden');
+                } else {
+                    if (isCollapsed) el.classList.add('hidden'); else el.classList.remove('hidden');
+                }
             });
         }
+
+        function handleResponsiveSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('main-content');
+
+            if (window.innerWidth <= 768) {
+                sidebar.classList.add('collapsed');
+                main.classList.add('sidebar-collapsed');
+                const mobileToggleIcon = document.querySelector('#mobile-sidebar-toggle i');
+                if (mobileToggleIcon) mobileToggleIcon.dataset.lucide = 'menu';
+            } else {
+                sidebar.classList.remove('collapsed');
+                main.classList.remove('sidebar-collapsed');
+                const mobileToggleIcon = document.querySelector('#mobile-sidebar-toggle i');
+                if (mobileToggleIcon) mobileToggleIcon.dataset.lucide = 'menu';
+            }
+            lucide.createIcons();
+        }
+
+        window.addEventListener('resize', handleResponsiveSidebar);
+        window.addEventListener('DOMContentLoaded', handleResponsiveSidebar);
 
         function renderVault() {
             const grid = document.getElementById('vault-grid');
