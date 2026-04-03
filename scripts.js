@@ -1,42 +1,75 @@
         lucide.createIcons();
 
+        async function getCardImage(name) {
+            const base = name.toLowerCase().replace(/ /g, '-');
+            try {
+                const response = await fetch('images/' + base + '.jpg', { method: 'HEAD' });
+                if (response.ok) {
+                    return 'images/' + base + '.jpg';
+                }
+            } catch (e) {}
+            try {
+                const response = await fetch('images/' + base + '.png', { method: 'HEAD' });
+                if (response.ok) {
+                    return 'images/' + base + '.png';
+                }
+            } catch (e) {}
+            return null; // No image found
+        }
+
         const ALL_CHARS = [
-            { name: "Diana Bullen", atk: 1, hp: 4, cost: 1, rarity: 'LEGENDARY', ability: 'guard', series: 'New Haven', image: 'images/diana-bullen.png' },
-            { name: "Natalie Bergeron", atk: 2, hp: 2, cost: 1, rarity: 'EPIC', ability: 'haste', series: 'New Haven', image: 'images/natalie-bergeron.jpg' },
-            { name: "Juliana Roberts", atk: 1, hp: 3, cost: 1, rarity: 'RARE', ability: 'heal', series: 'New Haven', image: 'images/juliana-roberts.jpg' },
-            { name: "Joseph", atk: 1, hp: 2, cost: 1, rarity: 'RARE', ability: 'berserk', series: 'New Haven', image: 'images/joseph.jpg' },
-            { name: "Jane", atk: 3, hp: 3, cost: 3, rarity: 'EPIC', ability: 'snipe', series: 'New Haven', image: 'images/jane.jpg' },
-            { name: "Marija", atk: 5, hp: 7, cost: 6, rarity: 'LEGENDARY', ability: 'heal', series: 'New Haven', image: 'images/marija.jpg' },
-            { name: "Quinta Valentine", atk: 4, hp: 2, cost: 3, rarity: 'RARE', ability: 'snipe', series: 'New Haven', image: 'images/quinta-valentine.jpg' },
-            { name: "Clara Garcia", atk: 2, hp: 6, cost: 4, rarity: 'UNCOMMON', ability: 'guard', series: 'New Haven', image: 'images/clara-garcia.jpg' },
-            { name: "Asuka", atk: 3, hp: 4, cost: 4, rarity: 'UNCOMMON', ability: 'echo', series: 'New Haven', image: 'images/asuka.jpg' },
-            { name: "Cheetor", atk: 3, hp: 4, cost: 4, rarity: 'RARE', ability: 'echo', series: 'New Haven', image: 'images/cheetor.jpg' },
-            { name: "Kijo", atk: 4, hp: 5, cost: 5, rarity: 'RARE', ability: 'splash', series: 'Detention', image: 'images/kijo.jpg' },
-            { name: "Yume", atk: 3, hp: 1, cost: 2, rarity: 'RARE', ability: 'haste2', series: 'Detention', image: 'images/yume.jpg' },
-            { name: "Mio", atk: 2, hp: 3, cost: 2, rarity: 'UNCOMMON', ability: 'echo', series: 'Detention', image: 'images/mio.jpg' },
-            { name: "Jillian Peters", atk: 1, hp: 5, cost: 2, rarity: 'EPIC', ability: 'guard', series: 'WTF Stepbro', image: 'images/jillian-peters.jpg' },
-            { name: "Melony", atk: 3, hp: 2, cost: 3, rarity: 'RARE', ability: 'haste', series: 'WTF Stepbro', image: 'images/melony.jpg' },
-            { name: "Kayla", atk: 2, hp: 4, cost: 3, rarity: 'UNCOMMON', ability: 'none', series: 'WTF Stepbro', image: 'images/kayla.jpg' },
-            { name: "Ashton", atk: 2, hp: 5, cost: 4, rarity: 'UNCOMMON', ability: 'guard', series: 'WTF Stepbro', image: 'images/ashton.jpg' },
-            { name: "Maria Hunley", atk: 4, hp: 6, cost: 5, rarity: 'LEGENDARY', ability: 'guard', series: 'Adoptive Life', image: 'images/maria-hunley.jpg' },
-            { name: "Hayley", atk: 2, hp: 2, cost: 2, rarity: 'LEGENDARY', ability: 'heal', series: 'Adoptive Life', image: 'images/hayley.jpg' },
-            { name: "James Lone", atk: 2, hp: 1, cost: 1, rarity: 'EPIC', ability: 'snipe', series: 'Adoptive Life', image: 'images/james-lone.jpg' },
-            { name: "Maiko", atk: 1, hp: 5, cost: 2, rarity: 'EPIC', ability: 'splash', series: 'Adoptive Life', image: 'images/maiko.jpg' },
-            { name: "Luther Jones", atk: 3, hp: 4, cost: 3, rarity: 'RARE', ability: 'haste', series: 'Adoptive Life', image: 'images/luther-jones.jpg' },
-            { name: "Aunt Julie", atk: 2, hp: 2, cost: 2, rarity: 'RARE', ability: 'heal', series: 'Adoptive Life', image: 'images/aunt-julie.jpg' },
-            { name: "Aunt Isabella", atk: 2, hp: 2, cost: 2, rarity: 'RARE', ability: 'echo', series: 'Adoptive Life', image: 'images/aunt-isabella.jpg' },
-            { name: "Kayla Kate", atk: 2, hp: 2, cost: 2, rarity: 'RARE', ability: 'silence', series: 'Adoptive Life', image: 'images/kayla-kate.jpg' },
-            { name: "Wert Lone", atk: 5, hp: 3, cost: 5, rarity: 'RARE', ability: 'guard', series: 'Adoptive Life', image: 'images/wert-lone.jpg' },
-            { name: "Catherine Jones", atk: 5, hp: 3, cost: 5, rarity: 'RARE', ability: 'disable', series: 'Adoptive Life', image: 'images/catherine-jones.jpg' },
-            { name: "Misaki", atk: 3, hp: 3, cost: 3, rarity: 'RARE', ability: 'none', series: 'Atarashī gakkō; Secret Garden!', image: 'images/misaki.jpg' },
-            { name: "Eri", atk: 6, hp: 2, cost: 4, rarity: 'LEGENDARY', ability: 'haste', series: 'Atarashī gakkō; Secret Garden!', image: 'images/eri.jpg' },
-            { name: "Yumi", atk: 1, hp: 2, cost: 1, rarity: 'RARE', ability: 'echo', series: 'Atarashī gakkō; Secret Garden!', image: 'images/yumi.png' },
-            { name: "Arisa", atk: 4, hp: 1, cost: 2, rarity: 'RARE', ability: 'haste', series: 'Atarashī gakkō; Secret Garden!', image: 'images/arisa.png' },
-            { name: "Helga", atk: 5, hp: 2, cost: 4, rarity: 'RARE', ability: 'haste', series: 'Atarashī gakkō; Secret Garden!', image: 'images/helga.png' },
+            { name: "Diana Bullen", atk: 1, hp: 4, cost: 1, rarity: 'LEGENDARY', ability: 'guard', series: 'New Haven', image: async () => await getCardImage("Diana Bullen") },
+            { name: "Natalie Bergeron", atk: 2, hp: 2, cost: 1, rarity: 'EPIC', ability: 'haste', series: 'New Haven', image: async () => await getCardImage("Natalie Bergeron") },
+            { name: "Juliana Roberts", atk: 1, hp: 3, cost: 1, rarity: 'RARE', ability: 'heal', series: 'New Haven', image: async () => await getCardImage("Juliana Roberts") },
+            { name: "Joseph", atk: 1, hp: 2, cost: 1, rarity: 'RARE', ability: 'berserk', series: 'New Haven', image: async () => await getCardImage("Joseph") },
+            { name: "Jane", atk: 3, hp: 3, cost: 3, rarity: 'EPIC', ability: 'snipe', series: 'New Haven', image: async () => await getCardImage("Jane") },
+            { name: "Marija", atk: 5, hp: 7, cost: 6, rarity: 'LEGENDARY', ability: 'heal', series: 'New Haven', image: async () => await getCardImage("Marija") },
+            { name: "Quinta Valentine", atk: 4, hp: 2, cost: 3, rarity: 'RARE', ability: 'snipe', series: 'New Haven', image: async () => await getCardImage("Quinta Valentine") },
+            { name: "Clara Garcia", atk: 2, hp: 6, cost: 4, rarity: 'UNCOMMON', ability: 'guard', series: 'New Haven', image: async () => await getCardImage("Clara Garcia") },
+            { name: "Asuka", atk: 3, hp: 4, cost: 4, rarity: 'UNCOMMON', ability: 'echo', series: 'New Haven', image: async () => await getCardImage("Asuka") },
+            { name: "Cheetor", atk: 3, hp: 4, cost: 4, rarity: 'RARE', ability: 'echo', series: 'New Haven', image: async () => await getCardImage("Cheetor") },
+            { name: "Kijo", atk: 4, hp: 5, cost: 5, rarity: 'RARE', ability: 'splash', series: 'Detention', image: async () => await getCardImage("Kijo") },
+            { name: "Yume", atk: 3, hp: 1, cost: 2, rarity: 'RARE', ability: 'haste2', series: 'Detention', image: async () => await getCardImage("Yume") },
+            { name: "Mio", atk: 2, hp: 3, cost: 2, rarity: 'UNCOMMON', ability: 'echo', series: 'Detention', image: async () => await getCardImage("Mio") },
+            { name: "Jillian Peters", atk: 1, hp: 5, cost: 2, rarity: 'EPIC', ability: 'guard', series: 'WTF Stepbro', image: async () => await getCardImage("Jillian Peters") },
+            { name: "Melony", atk: 3, hp: 2, cost: 3, rarity: 'RARE', ability: 'haste', series: 'WTF Stepbro', image: async () => await getCardImage("Melony") },
+            { name: "Kayla", atk: 2, hp: 4, cost: 3, rarity: 'UNCOMMON', ability: 'none', series: 'WTF Stepbro', image: async () => await getCardImage("Kayla") },
+            { name: "Ashton", atk: 2, hp: 5, cost: 4, rarity: 'UNCOMMON', ability: 'guard', series: 'WTF Stepbro', image: async () => await getCardImage("Ashton") },
+            { name: "Maria Hunley", atk: 4, hp: 6, cost: 5, rarity: 'LEGENDARY', ability: 'guard', series: 'Adoptive Life', image: async () => await getCardImage("Maria Hunley") },
+            { name: "Hayley", atk: 2, hp: 2, cost: 2, rarity: 'LEGENDARY', ability: 'heal', series: 'Adoptive Life', image: async () => await getCardImage("Hayley") },
+            { name: "James Lone", atk: 2, hp: 1, cost: 1, rarity: 'EPIC', ability: 'snipe', series: 'Adoptive Life', image: async () => await getCardImage("James Lone") },
+            { name: "Maiko", atk: 1, hp: 5, cost: 2, rarity: 'EPIC', ability: 'splash', series: 'Adoptive Life', image: async () => await getCardImage("Maiko") },
+            { name: "Luther Jones", atk: 3, hp: 4, cost: 3, rarity: 'RARE', ability: 'haste', series: 'Adoptive Life', image: async () => await getCardImage("Luther Jones") },
+            { name: "Aunt Julie", atk: 2, hp: 2, cost: 2, rarity: 'RARE', ability: 'heal', series: 'Adoptive Life', image: async () => await getCardImage("Aunt Julie") },
+            { name: "Aunt Isabella", atk: 2, hp: 2, cost: 2, rarity: 'RARE', ability: 'echo', series: 'Adoptive Life', image: async () => await getCardImage("Aunt Isabella") },
+            { name: "Kayla Kate", atk: 2, hp: 2, cost: 2, rarity: 'RARE', ability: 'silence', series: 'Adoptive Life', image: async () => await getCardImage("Kayla Kate") },
+            { name: "Wert Lone", atk: 5, hp: 3, cost: 5, rarity: 'RARE', ability: 'guard', series: 'Adoptive Life', image: async () => await getCardImage("Wert Lone") },
+            { name: "Catherine Jones", atk: 5, hp: 3, cost: 5, rarity: 'RARE', ability: 'disable', series: 'Adoptive Life', image: async () => await getCardImage("Catherine Jones") },
+            { name: "Misaki", atk: 3, hp: 3, cost: 3, rarity: 'RARE', ability: 'none', series: 'Atarashī gakkō; Secret Garden!', image: async () => await getCardImage("Misaki") },
+            { name: "Eri", atk: 6, hp: 2, cost: 4, rarity: 'LEGENDARY', ability: 'haste', series: 'Atarashī gakkō; Secret Garden!', image: async () => await getCardImage("Eri") },
+            { name: "Yumi", atk: 1, hp: 2, cost: 1, rarity: 'RARE', ability: 'echo', series: 'Atarashī gakkō; Secret Garden!', image: async () => await getCardImage("Yumi") },
+            { name: "Arisa", atk: 4, hp: 1, cost: 2, rarity: 'RARE', ability: 'haste', series: 'Atarashī gakkō; Secret Garden!', image: async () => await getCardImage("Arisa") },
+            { name: "Helga", atk: 5, hp: 2, cost: 4, rarity: 'RARE', ability: 'haste', series: 'Atarashī gakkō; Secret Garden!', image: async () => await getCardImage("Helga") },
             // { name: "Anon", atk: 1, hp: 1, cost: 1, rarity: 'COMMON', ability: 'none', series: 'Original', image: 'images/anon-1.png' },
             // { name: "Anon", atk: 2, hp: 3, cost: 2, rarity: 'COMMON', ability: 'none', series: 'Original', image: 'images/anon-2.png' },
-            { name: "Hina", atk: 3, hp: 2, cost: 3, rarity: 'LEGENDARY', ability: 'haste', series: 'Original', image: 'images/hina.jpg' },
-            { name: "Saya", atk: 2, hp: 2, cost: 2, rarity: 'LEGENDARY', ability: 'silence', series: 'Original', image: 'images/saya.png' },
+            { name: "Hina", atk: 3, hp: 2, cost: 3, rarity: 'LEGENDARY', ability: 'haste', series: 'Original', image: async () => await getCardImage("Hina") },
+            { name: "Saya", atk: 2, hp: 2, cost: 2, rarity: 'LEGENDARY', ability: 'silence', series: 'Original', image: async () => await getCardImage("Saya") },
+            { name: "Miracle", atk: 1, hp: 4, cost: 2, rarity: 'EPIC', ability: 'guard', series: 'Legend Of You', image: async () => await getCardImage("Miracle") },
+            { name: "Faneel", atk: 4, hp: 5, cost: 5, rarity: 'EPIC', ability: 'snipe', series: 'Legend Of You', image: async () => await getCardImage("Faneel") },
+            { name: "Ophelia", atk: 2, hp: 3, cost: 3, rarity: 'RARE', ability: 'heal', series: 'Legend Of You', image: async () => await getCardImage("Ophelia") },
+            { name: "Daphne", atk: 3, hp: 3, cost: 4, rarity: 'RARE', ability: 'snipe', series: 'Legend Of You', image: async () => await getCardImage("Daphne") },
+            { name: "Shirayukihime", atk: 2, hp: 4, cost: 3, rarity: 'UNCOMMON', ability: 'guard', series: 'Legend Of You', image: async () => await getCardImage("Shirayukihime") },
+            { name: "Rimu Hiraga", atk: 3, hp: 2, cost: 3, rarity: 'UNCOMMON', ability: 'echo', series: 'Bloodlines', image: async () => await getCardImage("Rimu Hiraga") },
+            { name: "Sakura Tooyama", atk: 4, hp: 1, cost: 2, rarity: 'UNCOMMON', ability: 'haste', series: 'Bloodlines', image: async () => await getCardImage("Sakura Tooyama") },
+            { name: "Aoi Kananori", atk: 5, hp: 4, cost: 5, rarity: 'RARE', ability: 'snipe', series: 'Bloodlines', image: async () => await getCardImage("Aoi Kananori") },
+            { name: "Ayaka Yamanami", atk: 3, hp: 5, cost: 4, rarity: 'RARE', ability: 'splash', series: 'Bloodlines', image: async () => await getCardImage("Ayaka Yamanami") },
+            { name: "Saito Iroha", atk: 2, hp: 6, cost: 4, rarity: 'RARE', ability: 'guard', series: 'Bloodlines', image: async () => await getCardImage("Saito Iroha") },
+            { name: "Mai Yamanobe", atk: 4, hp: 4, cost: 4, rarity: 'RARE', ability: 'disable', series: 'Bloodlines', image: async () => await getCardImage("Mai Yamanobe") },
+            { name: "Haruka Hijikata", atk: 3, hp: 3, cost: 3, rarity: 'RARE', ability: 'none', series: 'Bloodlines', image: async () => await getCardImage("Haruka Hijikata") },
+            { name: "Shogun Kagetora", atk: 0, hp: 0, cost: 0, rarity: 'EPIC', ability: 'none', series: 'Bloodlines', image: async () => await getCardImage("Shogun Kagetora") },
+            { name: "Mr.Bandit", atk: 0, hp: 0, cost: 0, rarity: 'COMMON', ability: 'none', series: 'Bloodlines', image: async () => await getCardImage("Mr.Bandit") },
+            { name: "", atk: 0, hp: 0, cost: 0, rarity: 'COMMON', ability: 'none', series: 'Original', image: async () => await getCardImage("") },
+            { name: "", atk: 0, hp: 0, cost: 0, rarity: 'COMMON', ability: 'none', series: 'Original', image: async () => await getCardImage("") },
         ];
 
         // Abilities:
@@ -140,7 +173,7 @@
         window.addEventListener('resize', handleResponsiveSidebar);
         window.addEventListener('DOMContentLoaded', handleResponsiveSidebar);
 
-        function renderVault() {
+        async function renderVault() {
             const grid = document.getElementById('vault-grid');
             grid.innerHTML = '';
 
@@ -160,7 +193,7 @@
             const sortedSeries = Object.keys(seriesGroups).sort();
 
             // Create sections for each series
-            sortedSeries.forEach(series => {
+            for (const series of sortedSeries) {
                 // Create series header
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'series-header';
@@ -172,13 +205,15 @@
 
                 // Add characters to this series
                 const seriesGrid = headerDiv.querySelector('.grid');
-                seriesGroups[series].forEach(c => {
-                    seriesGrid.appendChild(createCardUI(c, 0, 'preview'));
-                });
-            });
+                for (const c of seriesGroups[series]) {
+                    const cardDiv = await createCardUI(c, 0, 'preview');
+                    seriesGrid.appendChild(cardDiv);
+                }
+            }
         }
 
-        function createCardUI(card, index, type, status = {}) {
+        async function createCardUI(card, index, type, status = {}) {
+            const imageSrc = await card.image();
             const div = document.createElement('div');
             div.className = `card-nexus rarity-${card.rarity.toLowerCase()} ${status.exhausted ? 'is-exhausted' : ''} ${card.ability === 'guard' ? 'is-guard' : ''} ${type === 'preview' ? 'card-vault' : ''}`;
             
@@ -194,7 +229,7 @@
                 ${type !== 'board' ? `<div class="cost-badge">${card.cost}</div>` : ''}
                 <div class="rarity-badge">${card.rarity}</div>
                 <div class="flex-1 flex flex-col items-center justify-center pointer-events-none">
-                    <img src="${card.image}" class="w-8 h-8 mb-1 object-contain" alt="${card.name}">
+                    <img src="${imageSrc}" class="w-8 h-8 mb-1 object-contain" alt="${card.name}">
                     <div class="text-[9px] font-black text-center leading-tight uppercase px-1">${card.name}</div>
                 </div>
                 <div class="text-[6px] text-indigo-400 font-bold text-center mt-1 uppercase pointer-events-none">${card.ability !== 'none' ? card.ability : ''}</div>
@@ -235,7 +270,7 @@
             }
         }
 
-        function updateBattleUI() {
+        async function updateBattleUI() {
             if(state.activeScreen !== 'arena') return;
             document.getElementById('player-hp').innerText = state.pHp;
             document.getElementById('enemy-hp').innerText = state.eHp;
@@ -243,20 +278,24 @@
             
             const handEl = document.getElementById('player-hand');
             handEl.innerHTML = '';
-            state.hand.forEach((c, i) => handEl.appendChild(createCardUI(c, i, 'hand')));
+            for (const [i, c] of state.hand.entries()) {
+                const cardDiv = await createCardUI(c, i, 'hand');
+                handEl.appendChild(cardDiv);
+            }
 
             for(let i=0; i<4; i++) {
-                renderBattleSlot('player', i);
-                renderBattleSlot('enemy', i);
+                await renderBattleSlot('player', i);
+                await renderBattleSlot('enemy', i);
             }
         }
 
-        function renderBattleSlot(side, idx) {
+        async function renderBattleSlot(side, idx) {
             const slot = document.getElementById(`${side}-slot-${idx}`);
             slot.innerHTML = '';
             const unit = side === 'player' ? state.pBoard[idx] : state.eBoard[idx];
             if(unit) {
-                slot.appendChild(createCardUI(unit.card, idx, 'board', unit.status));
+                const cardDiv = await createCardUI(unit.card, idx, 'board', unit.status);
+                slot.appendChild(cardDiv);
                 if (unit.status.justPlayed) {
                     setTimeout(() => { unit.status.justPlayed = false; }, 1000);
                 }
