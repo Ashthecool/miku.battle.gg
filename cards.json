@@ -1,0 +1,731 @@
+[
+  {
+    "name": "Diana Bullen",
+    "atk": 2,
+    "hp": 4,
+    "cost": 3,
+    "rarity": "LEGENDARY",
+    "ability": "guard",
+    "series": "New Haven",
+    "description": "£{''The more Diana experimented, the more ability she got.''}£ --- /lightgreen/Guard/ that gains /darkred/+2 atk/ at the end of each turn.",
+    "abilities": {
+      "onTurnEnd": [
+        {
+          "type": "attackUpSelf",
+          "value": 2
+        }
+      ]
+    }
+  },
+  {
+    "name": "Natalie Bergeron",
+    "atk": 2,
+    "hp": 2,
+    "cost": 1,
+    "rarity": "EPIC",
+    "ability": "haste",
+    "series": "New Haven",
+    "description": "/darkred/Fast attacker/ that can strike immediately when played, also heals all allies with /lightgreen/2 hp/.",
+    "abilities": {
+      "onPlay": [
+        {
+          "type": "healAllies",
+          "value": 3
+        }
+      ]
+    }
+  },
+  {
+    "name": "Juliana Roberts",
+    "atk": 1,
+    "hp": 3,
+    "cost": 1,
+    "rarity": "RARE",
+    "ability": "heal",
+    "series": "New Haven",
+    "description": "With her delicious food, she heals you for the amount of she deals. /n /darkred/ATK/ will increase if /white/Marija/ is in play.",
+    "abilities": {
+      "onAttack": [
+        {
+          "type": "healNexus",
+          "value": "Math.ceil(card.atk / 2)"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Joseph",
+    "atk": 1,
+    "hp": 2,
+    "cost": 1,
+    "rarity": "RARE",
+    "ability": "berserk",
+    "series": "New Haven",
+    "description": "When played will deal /darkred/1 damage/ to all enemies. Will deal /darkred/2 dmg/ if /white/Natalie/ or /white/Jane/ is in play.",
+    "abilities": {
+        "onPlay": [{ "type": "dealDamageAllEnemies", "damage": "1 + context.scenario" }],
+        "scenario": {
+          "type": "or",
+          "cards": ["Natalie Bergeron", "Jane"],
+          "positive": 1,
+          "negative": 0
+        }
+    }
+  },
+  {
+    "name": "Jane",
+    "atk": 3,
+    "hp": 3,
+    "cost": 3,
+    "rarity": "EPIC",
+    "ability": "snipe",
+    "series": "New Haven",
+    "description": "Sniper with precise targeting capabilities."
+  },
+  {
+    "name": "Marija",
+    "atk": 5,
+    "hp": 7,
+    "cost": 6,
+    "rarity": "LEGENDARY",
+    "ability": "heal",
+    "series": "New Haven",
+    "description": "Powerful healer with high health and healing abilities."
+  },
+  {
+    "name": "Quinta Valentine",
+    "atk": 4,
+    "hp": 2,
+    "cost": 3,
+    "rarity": "RARE",
+    "ability": "snipe",
+    "series": "New Haven",
+    "description": "Sniper specialist with deadly accuracy."
+  },
+  {
+    "name": "Clara Garcia",
+    "atk": 2,
+    "hp": 6,
+    "cost": 4,
+    "rarity": "UNCOMMON",
+    "ability": "guard",
+    "series": "New Haven",
+    "description": "Defensive guardian that protects allies."
+  },
+  {
+    "name": "Asuka",
+    "atk": 3,
+    "hp": 4,
+    "cost": 4,
+    "rarity": "UNCOMMON",
+    "ability": "echo",
+    "series": "New Haven",
+    "description": "Echo fighter that can repeat actions."
+  },
+  {
+    "name": "Cheetor",
+    "atk": 3,
+    "hp": 4,
+    "cost": 4,
+    "rarity": "RARE",
+    "ability": "echo",
+    "series": "New Haven",
+    "description": "Echo warrior with enhanced abilities."
+  },
+  {
+    "name": "Kijo",
+    "atk": 4,
+    "hp": 5,
+    "cost": 5,
+    "rarity": "RARE",
+    "ability": "splash",
+    "series": "Detention",
+    "description": "Splash attacker that damages adjacent enemies.",
+    "abilities": {
+      "onAttack": [
+        {
+          "type": "splashAdjacent",
+          "damage": 1
+        }
+      ]
+    }
+  },
+  {
+    "name": "Yume",
+    "atk": 3,
+    "hp": 1,
+    "cost": 2,
+    "rarity": "RARE",
+    "ability": "haste2",
+    "series": "Detention",
+    "description": "Ultra-fast attacker with haste abilities."
+  },
+  {
+    "name": "Mio",
+    "atk": 2,
+    "hp": 3,
+    "cost": 2,
+    "rarity": "UNCOMMON",
+    "ability": "echo",
+    "series": "Detention",
+    "description": "Echo unit with supportive capabilities."
+  },
+  {
+    "name": "Jillian Peters",
+    "atk": 1,
+    "hp": 5,
+    "cost": 2,
+    "rarity": "EPIC",
+    "ability": "guard",
+    "series": "WTF Stepbro",
+    "description": "Defensive tank with high health."
+  },
+  {
+    "name": "Melony",
+    "atk": 3,
+    "hp": 2,
+    "cost": 3,
+    "rarity": "RARE",
+    "ability": "haste",
+    "series": "WTF Stepbro",
+    "description": "Fast striker with haste."
+  },
+  {
+    "name": "Kayla",
+    "atk": 2,
+    "hp": 4,
+    "cost": 3,
+    "rarity": "UNCOMMON",
+    "ability": "none",
+    "series": "WTF Stepbro",
+    "description": "Basic unit with no special abilities."
+  },
+  {
+    "name": "Ashton",
+    "atk": 2,
+    "hp": 5,
+    "cost": 4,
+    "rarity": "UNCOMMON",
+    "ability": "guard",
+    "series": "WTF Stepbro",
+    "description": "Defensive protector."
+  },
+  {
+    "name": "Maria Hunley",
+    "atk": 4,
+    "hp": 6,
+    "cost": 1,
+    "rarity": "LEGENDARY",
+    "ability": "guard",
+    "series": "Adoptive Life",
+    "description": "/lightgreen/Guard/, will protect you, when your turn is over she will gain /lightgreen/+2 hp/.",
+    "abilities": {
+      "onTurnEnd": [
+        {
+          "type": "healSelf",
+          "value": 2
+        }
+      ]
+    }
+  },
+  {
+    "name": "Hayley",
+    "atk": 2,
+    "hp": 2,
+    "cost": 2,
+    "rarity": "LEGENDARY",
+    "ability": "heal",
+    "series": "Adoptive Life",
+    "description": "/yellow/Healer/ that restores your /lightgreen/hp/ when played. /n She will also gain /lightgreen/+2 hp/ for each her family is in play.",
+    "abilities": {
+        "onPlay": [{ "type": "healSelf", "value": "context.scenario" }],
+        "scenario": {
+          "type": "each",
+          "cards": ["Kayla Kate", "Farley Kate", "Harris Kate", "Fami Moft"],
+          "value": 2
+        }
+      }
+  },
+  {
+    "name": "James Lone",
+    "atk": 2,
+    "hp": 1,
+    "cost": 1,
+    "rarity": "EPIC",
+    "ability": "snipe",
+    "series": "Adoptive Life",
+    "description": "/slategray/Sniper/ that deals bonus damage on attacks. /n James will gain /red/+2 attack/ if /orange/Kayla Kate/ is in play.",
+    "abilities": {
+      "onAttack": [
+        {
+          "type": "snipeDamage",
+          "damage": 2
+        }
+      ]
+    }
+  },
+  {
+    "name": "Maiko",
+    "atk": 1,
+    "hp": 5,
+    "cost": 2,
+    "rarity": "EPIC",
+    "ability": "splash",
+    "series": "Adoptive Life",
+    "description": "/cyan/Splash/ attacker that deals /red/3 damage/ to adjacent enemies.",
+    "abilities": {
+      "onAttack": [
+        {
+          "type": "splashAdjacent",
+          "damage": 3
+        }
+      ]
+    }
+  },
+  {
+    "name": "Luther Jones",
+    "atk": 3,
+    "hp": 4,
+    "cost": 3,
+    "rarity": "RARE",
+    "ability": "draw",
+    "series": "Adoptive Life",
+    "description": "Rich guy, makes you /gold/draw/ cards for each of his friends in play."
+  },
+  {
+    "name": "Aunt Julie",
+    "atk": 2,
+    "hp": 2,
+    "cost": 2,
+    "rarity": "RARE",
+    "ability": "heal",
+    "series": "Adoptive Life",
+    "description": "Support healer that restores nexus health when played.",
+    "abilities": {
+      "onPlay": [
+        {
+          "type": "healNexus",
+          "value": 2
+        }
+      ]
+    }
+  },
+  {
+    "name": "Aunt Isabella",
+    "atk": 2,
+    "hp": 2,
+    "cost": 2,
+    "rarity": "RARE",
+    "ability": "echo",
+    "series": "Adoptive Life",
+    "description": "cyan**Echo** unit with versatile abilities."
+  },
+  {
+    "name": "Kayla Kate",
+    "atk": 2,
+    "hp": 2,
+    "cost": 2,
+    "rarity": "RARE",
+    "ability": "silence",
+    "series": "Adoptive Life",
+    "description": "/grey/Silencer/ that disables enemy abilities when attacking.",
+    "abilities": {
+      "onAttack": [
+        {
+          "type": "silenceTarget"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Fami Moft",
+    "atk": 2,
+    "hp": 2,
+    "cost": 2,
+    "rarity": "RARE",
+    "ability": "silence",
+    "series": "Adoptive Life",
+    "description": "The Owner of ''Le gingembre'' cafe, /lightgreen/heals/ everyone when attacking for /lightgreen/1 hp/."
+  },
+  {
+    "name": "Farley Kate",
+    "atk": 2,
+    "hp": 2,
+    "cost": 2,
+    "rarity": "RARE",
+    "ability": "silence",
+    "series": "Adoptive Life",
+    "description": "/grey/Silencer/ that disables enemy abilities when attacking."
+  },
+  {
+    "name": "Harris Kate",
+    "atk": 2,
+    "hp": 2,
+    "cost": 2,
+    "rarity": "RARE",
+    "ability": "silence",
+    "series": "Adoptive Life",
+    "description": "/grey/Silencer/ that disables enemy abilities when attacking."
+  },
+  {
+    "name": "Wert Lone",
+    "atk": 5,
+    "hp": 3,
+    "cost": 5,
+    "rarity": "RARE",
+    "ability": "guard",
+    "series": "Adoptive Life",
+    "description": "Powerful guardian with high attack."
+  },
+  {
+    "name": "Catherine Jones",
+    "atk": 5,
+    "hp": 3,
+    "cost": 5,
+    "rarity": "RARE",
+    "ability": "disable",
+    "series": "Adoptive Life",
+    "description": "Disabler that prevents enemy actions when attacking.",
+    "abilities": {
+      "onAttack": [
+        {
+          "type": "disableTarget"
+        }
+      ]
+    }
+  },
+  {
+    "name": "Misaki",
+    "atk": 3,
+    "hp": 3,
+    "cost": 3,
+    "rarity": "RARE",
+    "ability": "none",
+    "series": "Atarashī gakkō; Secret Garden!"
+  },
+  {
+    "name": "Eri",
+    "atk": 6,
+    "hp": 2,
+    "cost": 4,
+    "rarity": "LEGENDARY",
+    "ability": "haste",
+    "series": "Atarashī gakkō; Secret Garden!",
+    "description": "Legendary attacker with haste and a powerful on-play effect that draws a card.",
+    "abilities": {
+      "onPlay": [
+        {
+          "type": "drawCard",
+          "amount": 1
+        }
+      ]
+    }
+  },
+  {
+    "name": "Yumi",
+    "atk": 1,
+    "hp": 2,
+    "cost": 1,
+    "rarity": "RARE",
+    "ability": "echo",
+    "series": "Atarashī gakkō; Secret Garden!",
+    "description": "Echo unit with versatile abilities."
+  },
+  {
+    "name": "Arisa",
+    "atk": 4,
+    "hp": 1,
+    "cost": 2,
+    "rarity": "RARE",
+    "ability": "haste",
+    "series": "Atarashī gakkō; Secret Garden!"
+  },
+  {
+    "name": "Helga",
+    "atk": 5,
+    "hp": 2,
+    "cost": 4,
+    "rarity": "RARE",
+    "ability": "haste",
+    "series": "Atarashī gakkō; Secret Garden!"
+  },
+  {
+    "name": "Hina",
+    "atk": 3,
+    "hp": 2,
+    "cost": 3,
+    "rarity": "LEGENDARY",
+    "ability": "haste",
+    "series": "Original"
+  },
+  {
+    "name": "Saya",
+    "atk": 2,
+    "hp": 2,
+    "cost": 2,
+    "rarity": "LEGENDARY",
+    "ability": "silence",
+    "series": "Original"
+  },
+  {
+    "name": "Miracle",
+    "atk": 1,
+    "hp": 4,
+    "cost": 2,
+    "rarity": "EPIC",
+    "ability": "guard",
+    "series": "Legend Of You"
+  },
+  {
+    "name": "Faneel",
+    "atk": 4,
+    "hp": 5,
+    "cost": 5,
+    "rarity": "EPIC",
+    "ability": "snipe",
+    "series": "Legend Of You"
+  },
+  {
+    "name": "Ophelia",
+    "atk": 2,
+    "hp": 3,
+    "cost": 3,
+    "rarity": "RARE",
+    "ability": "heal",
+    "series": "Legend Of You"
+  },
+  {
+    "name": "Daphne",
+    "atk": 3,
+    "hp": 3,
+    "cost": 4,
+    "rarity": "RARE",
+    "ability": "snipe",
+    "series": "Legend Of You"
+  },
+  {
+    "name": "Shirayukihime",
+    "atk": 2,
+    "hp": 4,
+    "cost": 3,
+    "rarity": "UNCOMMON",
+    "ability": "guard",
+    "series": "Legend Of You"
+  },
+  {
+    "name": "Rimu Hiraga",
+    "atk": 3,
+    "hp": 2,
+    "cost": 3,
+    "rarity": "UNCOMMON",
+    "ability": "echo",
+    "series": "Bloodlines"
+  },
+  {
+    "name": "Sakura Tooyama",
+    "atk": 4,
+    "hp": 1,
+    "cost": 2,
+    "rarity": "UNCOMMON",
+    "ability": "haste",
+    "series": "Bloodlines"
+  },
+  {
+    "name": "Aoi Kananori",
+    "atk": 5,
+    "hp": 4,
+    "cost": 5,
+    "rarity": "RARE",
+    "ability": "snipe",
+    "series": "Bloodlines"
+  },
+  {
+    "name": "Ayaka Yamanami",
+    "atk": 3,
+    "hp": 5,
+    "cost": 4,
+    "rarity": "RARE",
+    "ability": "splash",
+    "series": "Bloodlines"
+  },
+  {
+    "name": "Saito Iroha",
+    "atk": 2,
+    "hp": 6,
+    "cost": 4,
+    "rarity": "RARE",
+    "ability": "guard",
+    "series": "Bloodlines"
+  },
+  {
+    "name": "Mai Yamanobe",
+    "atk": 4,
+    "hp": 4,
+    "cost": 4,
+    "rarity": "RARE",
+    "ability": "disable",
+    "series": "Bloodlines"
+  },
+  {
+    "name": "Haruka Hijikata",
+    "atk": 3,
+    "hp": 3,
+    "cost": 3,
+    "rarity": "RARE",
+    "ability": "none",
+    "series": "Bloodlines"
+  },
+  {
+    "name": "Shogun Kagetora",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "EPIC",
+    "ability": "none",
+    "series": "Bloodlines"
+  },
+  {
+    "name": "Mr.Bandit",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "COMMON",
+    "ability": "none",
+    "series": "Bloodlines"
+  },
+  {
+    "name": "Claire",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "COMMON",
+    "ability": "none",
+    "series": "Grove Keeper"
+  },
+  {
+    "name": "Elsy",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "COMMON",
+    "ability": "none",
+    "series": "Grove Keeper"
+  },
+  {
+    "name": "Larry",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "COMMON",
+    "ability": "none",
+    "series": "Grove Keeper"
+  },
+  {
+    "name": "Pippa",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "COMMON",
+    "ability": "none",
+    "series": "Grove Keeper"
+  },
+  {
+    "name": "Cody",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "COMMON",
+    "ability": "none",
+    "series": "Grove Keeper"
+  },
+  {
+    "name": "Berry",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "COMMON",
+    "ability": "none",
+    "series": "Grove Keeper"
+  },
+  {
+    "name": "Marivelle",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "COMMON",
+    "ability": "none",
+    "series": "Grove Keeper"
+  },
+  {
+    "name": "Paloma",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "COMMON",
+    "ability": "none",
+    "series": "Grove Keeper"
+  },
+  {
+    "name": "Rodney",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "COMMON",
+    "ability": "none",
+    "series": "Grove Keeper"
+  },
+  {
+    "name": "Ida",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "EPIC",
+    "ability": "heal",
+    "series": "Original"
+  },
+  {
+    "name": "Yllara",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "RARE",
+    "ability": "heal",
+    "series": "Original"
+  },
+  {
+    "name": "Sophia",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "COMMON",
+    "ability": "none",
+    "series": "Medieval Adventure Novel"
+  },
+  {
+    "name": "Herlanda Blackwood",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "COMMON",
+    "ability": "none",
+    "series": "Medieval Adventure Novel"
+  },
+  {
+    "name": "Anna",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "COMMON",
+    "ability": "none",
+    "series": "Medieval Adventure Novel"
+  },
+  {
+    "name": "Knight Jeroledo",
+    "atk": 0,
+    "hp": 0,
+    "cost": 0,
+    "rarity": "COMMON",
+    "ability": "none",
+    "series": "Medieval Adventure Novel"
+  }
+]

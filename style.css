@@ -48,6 +48,25 @@
         .anim-epic { animation: epic-entry 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
         .anim-legendary { animation: legendary-glow 1s ease-out forwards; border-color: #fbbf24 !important; }
 
+        /* The physical slam movement (Player attacking Enemy) */
+        @keyframes slam-up {
+            0% { transform: translate(0, 0) scale(1); z-index: 100; }
+            20% { transform: translateY(15px) scale(0.95); z-index: 100; } /* Wind up */
+            45% { transform: translate(calc(var(--slam-target-x, 0px)), calc(calc(var(--slam-target-y, 0px) - 80px))) scale(1.1); z-index: 100; } /* IMPACT */
+            100% { transform: translate(0, 0) scale(1); z-index: 1; }
+        }
+
+        .animate-slam-up { animation: slam-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+        /* The violent red impact flash */
+        @keyframes hit-flicker {
+            0% { filter: brightness(1); }
+            30% { filter: brightness(3) sepia(1) saturate(10) contrast(4) drop-shadow(2px 2px 20px red); }
+            100% { filter: brightness(1); }
+        }
+
+        .animate-hit-flicker { animation: hit-flicker 0.4s ease-out forwards; }
+
         @keyframes heal-pulse {
             0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); transform: scale(1); }
             50% { box-shadow: 0 0 0 14px rgba(34, 197, 94, 0); transform: scale(1.02); }
@@ -70,6 +89,7 @@
         .animate-heal { animation: heal-pulse 0.7s ease-out forwards; }
         .animate-attack { animation: attack-swing 0.35s ease-out forwards; }
         .animate-ability { animation: ability-flash 0.65s ease-in-out forwards; }
+        .animate-silenced { animation: ability-flash 0.65s ease-in-out forwards; filter: grayscale(1) brightness(0.8); }
 
         /* Card Styling */
         .card-nexus {
@@ -93,7 +113,7 @@
 
         .card-vault {
             width: 250px;
-            height: 300px;
+            height: 350px;
             padding: 8px;
         }
 
@@ -395,4 +415,37 @@
         .card-nexus img, .card-vault img {
             transition: transform 0.2s ease, filter 0.2s ease;
             transform-origin: center center;
+        }
+
+        .description-box {
+            font-size: 13px;
+            color: #a78bfa;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 4px;
+            padding: 3px 4px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 4px;
+            line-height: 1.3;
+            pointer-events: none;
+            height: 100px;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: auto;
+            display: block;
+            overflow-y: auto;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .description-box strong {
+            font-size: 1.2em;
+            font-weight: 900;
+        }
+
+        .description-box span {
+            font-weight: bold;
+            font-size: 1.1em;
         }
