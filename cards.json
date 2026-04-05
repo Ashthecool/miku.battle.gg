@@ -238,7 +238,7 @@
     "series": "Adoptive Life",
     "description": "/yellow/Healer/ that restores your /lightgreen/hp/ when played. /n She will also gain /lightgreen/+2 hp/ for each her family is in play.",
     "abilities": {
-        "onPlay": [{ "type": "healSelf", "value": "context.scenario" }],
+        "onPlay": [{ "type": "hpUpSelf", "value": "context.scenario" }],
         "scenario": {
           "type": "each",
           "cards": ["Kayla Kate", "Farley Kate", "Harris Kate", "Fami Moft"],
@@ -290,7 +290,7 @@
     "rarity": "RARE",
     "ability": "draw",
     "series": "Adoptive Life",
-    "description": "Rich guy, makes you /gold/draw/ cards for each of his friends in play."
+    "description": "[rainbow]Rich guy[/rainbow], makes you /gold/draw/ cards for each of his friends in play."
   },
   {
     "name": "Aunt Julie",

@@ -93,8 +93,8 @@
 
         /* Card Styling */
         .card-nexus {
-            width: 250px;
-            height: 300px;
+            width: 150px;
+            height: 150px;
             background: #111;
             border: 2px solid #333;
             border-radius: 10px;
@@ -396,8 +396,8 @@
         }
 
         .card-nexus img {
-            width: 200px;
-            height: 250px;
+            width: 100px;
+            height: 100px;
             border-radius: 50px;
         }
 
@@ -448,4 +448,55 @@
         .description-box span {
             font-weight: bold;
             font-size: 1.1em;
+        }
+
+        /* Hide description for cards while they are in the arena/hand */
+        #screen-arena .card-nexus .description-box {
+            display: none;
+        }
+
+        /* Optional: Make the hover effect on the board slightly less aggressive since we have a preview panel now */
+        #screen-arena .card-nexus:hover {
+            transform: scale(1.05); 
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* The fixed preview panel on the right side of the screen */
+        #card-preview-panel {
+            position: fixed;
+            right: 3rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 250px;
+            pointer-events: none; /* Ensures it doesn't block your mouse clicks */
+            z-index: 9999;
+            display: none;
+            transition: opacity 0.2s ease;
+        }
+
+        #card-preview-panel img {
+            width: 200px ;
+            height: 200px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+        }
+
+        /* Show the panel when active */
+        #card-preview-panel.active {
+            display: block;
+            animation: bounce-shake 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Force the description to reappear inside the preview panel */
+        #card-preview-panel .card-nexus .description-box {
+            display: block !important;
+        }
+
+        /* Make the preview card huge and majestic */
+        #card-preview-panel .card-nexus {
+            width: 100%;
+            height: 360px;
+            transform: scale(1.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 1);
+            margin: 0;
         }

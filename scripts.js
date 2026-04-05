@@ -60,28 +60,31 @@
         function evaluateScenario(scenario, unit, context = {}) {
             if (!scenario) return 0;
 
-            // 1. Determine which board to check (Default to player's board)
+            // 1. Determine which board to check
             const side = scenario.side || context.side || 'player';
             const board = (side === 'player') ? state.pBoard : state.eBoard;
             
-            // 2. Get the list of names (Supports both "cards" and "cardNames" keys)
+            // 2. Get the list of names
             const names = scenario.cards || scenario.cardNames || [];
             if (!Array.isArray(names)) return 0;
 
-            // 3. Check the board for those names
-            const results = names.map(name => isCardOnBoard(board, name));
+            // 3. NEW: Count exactly how many of each target card are on the board
+            const counts = names.map(name => {
+                return board.filter(slot => slot && slot.card && slot.card.name === name).length;
+            });
 
-            // 4. Handle "Each" logic (e.g., "+2 for every friend in play")
+            // 4. Handle "Each" logic
             if (scenario.type === 'each') {
-                const count = results.filter(Boolean).length;
+                // Sum the total occurrences across all target names
+                const totalMatches = counts.reduce((sum, count) => sum + count, 0);
                 const multiplier = resolveEffectValue(scenario.value || 1, unit.card, context);
-                return count * multiplier;
+                return totalMatches * multiplier;
             }
 
-            // 5. Handle "And/Or" logic
+            // 5. Handle "And/Or" logic (success if count is greater than 0)
             const success = (scenario.type === 'and' || scenario.type === 'all') 
-                ? results.every(Boolean) 
-                : results.some(Boolean);
+                ? counts.every(count => count > 0) 
+                : counts.some(count => count > 0);
 
             return success ? (scenario.positive ?? 1) : (scenario.negative ?? 0);
         }
@@ -182,6 +185,14 @@
                                 log(`${target.card.name.toUpperCase()} TAKES ${amount} DAMAGE.`);
                             }
                         }
+                    }
+                    break;
+                case 'hpUpSelf':
+                    unit.card.maxHp += amount; // Raise the ceiling
+                    unit.card.hp += amount;    // Add the health
+                    log(`${card.name.toUpperCase()} GAINS +${amount} MAX HP.`);
+                    if (context.side !== undefined && context.slot !== undefined) {
+                        animateCard(getSlotCard(context.side, context.slot), 'animate-heal');
                     }
                     break;
 
@@ -358,16 +369,38 @@
 
         function formatDescription(text) {
             if (!text) return 'No special abilities.';
-            // Replace **text** with <strong>text</strong>
-            text = text.replace(/([a-z]+)\*\*(.+?)\*\*/g, '<strong style="filter: drop-shadow(0 0 5px $1);"><strong>$2</strong></strong>');
-            // Replace /color/text// with <span style="color: color;">text</span>
-            text = text.replace(/\/([a-z]+)\/(.+?)\//g, '<span style="color: $1;">$2</span>');
-            // Replace newlines with <br>
+            
+            // 1. Lore/Italic text: £{Text}£
+            text = text.replace(/£\{(.+?)\}£/g, '<span class="italic text-white/70" style="font-size: 11px;">$1</span>');
+
+            // 2. Bold text with glow: **Text** (Cleaned up the color-dropping edge case)
+            text = text.replace(/\*\*([^\*]+)\*\*/g, '<span class="font-black text-white" style="text-shadow: rgba(255, 255, 255, 0.6) 0px 0px 10px;">$1</span>');
+
+            // 3. Dynamic Font Size: _16px_Text_
+            text = text.replace(/_(\d+px)_([^_]+)_/g, '<span style="font-size: $1; font-weight: bold;">$2</span>');
+
+            // 4. Color tags: /color/text/
+            text = text.replace(/\/([a-zA-Z]+)\/([^\/]+)\//g, '<span style="color: $1;">$2</span>');
+
+            // 5. Horizontal line: --- or /n---/n
+            text = text.replace(/(\/n)?---(\/n)?/g, '<div class="w-full h-px bg-gradient-to-r from-transparent via-purple-400/50 to-transparent my-1"></div>');
+
+            // 6. Rainbow Text: [rainbow]Text[/rainbow]
+            text = text.replace(/\[rainbow\](.*?)\[\/rainbow\]/g, '<span class="font-black animate-pulse" style="background: linear-gradient(to right, rgb(239, 68, 68), rgb(234, 179, 8), rgb(34, 197, 94), rgb(59, 130, 246), rgb(168, 85, 247)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">$1</span>');
+
+            // 7. Shaking/Bouncing Text: {shake}Text{/shake}
+            text = text.replace(/\{shake\}(.*?)\{\/shake\}/g, '<span class="font-bold inline-block animate-bounce text-red-400">$1</span>');
+
+            // 8. Stat Icons: #atk#, #hp#, #cost#
+            text = text.replace(/#atk#/g, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-red-500 inline-block align-middle mx-0.5"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"></polyline><line x1="13" x2="19" y1="19" y2="13"></line><line x1="16" x2="20" y1="16" y2="20"></line><line x1="19" x2="21" y1="21" y2="19"></line><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"></polyline><line x1="5" x2="9" y1="14" y2="18"></line><line x1="7" x2="4" y1="17" y2="20"></line><line x1="3" x2="5" y1="19" y2="21"></line></svg>`);
+            
+            text = text.replace(/#hp#/g, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-green-500 inline-block align-middle mx-0.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`);
+            
+            text = text.replace(/#cost#/g, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-indigo-400 inline-block align-middle mx-0.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`);
+
+            // 9. Replace newlines with <br>
             text = text.replace(/\/n/g, '<br>');
-            // Make a horizontal line if text is exactly ---
-            text = text.replace(/---/, '<hr class="my-2 border-purple-300">');
-            // make the text smaller and italic if it's wrapped in £{ }£
-            text = text.replace(/£\{(.+?)\}£/g, '<span class="italic" style="font-size: 0.7em;">$1</span>');
+
             return text;
         }
 
@@ -396,18 +429,46 @@
                 <div class="stat-badge hp-badge">${card.hp}</div>
             `;
 
-            if(type !== 'preview') {
-                div.ondragstart = (e) => { 
-                    state.dragging = { type, index }; 
-                    e.dataTransfer.setData('text/plain', '');
-                    e.currentTarget.style.opacity = '0.5';
-                };
-                div.ondragend = (e) => {
-                    e.currentTarget.style.opacity = '1';
+            // ... (Keep your existing drag events) ...
+                    if(type !== 'preview') {
+                        div.ondragstart = (e) => { 
+                            state.dragging = { type, index }; 
+                            e.dataTransfer.setData('text/plain', '');
+                            e.currentTarget.style.opacity = '0.5';
+                            // Hide preview while dragging
+                            document.getElementById('card-preview-panel').classList.remove('active');
+                        };
+                        div.ondragend = (e) => {
+                            e.currentTarget.style.opacity = '1';
+                        }
+                    }
+
+                    // NEW: Hover mechanics for the Preview Panel
+                    div.addEventListener('mouseenter', () => {
+                        const previewPanel = document.getElementById('card-preview-panel');
+                        if (previewPanel && !state.dragging) {
+                            previewPanel.innerHTML = ''; // Clear old card
+                            const clone = div.cloneNode(true); // Copy the exact card HTML
+                            
+                            // Remove drag events and animations from the clone
+                            clone.ondragstart = null;
+                            clone.style.animation = 'none'; 
+                            
+                            previewPanel.appendChild(clone);
+                            previewPanel.classList.add('active');
+                        }
+                    });
+
+                    div.addEventListener('mouseleave', () => {
+                        const previewPanel = document.getElementById('card-preview-panel');
+                        if (previewPanel) {
+                            previewPanel.classList.remove('active');
+                        }
+                    });
+
+                    return div;
                 }
-            }
-            return div;
-        }
+        ;
 
         function startBattleInternal() {
 
@@ -417,7 +478,7 @@
 
             // --- FORCED MULTIPLE CARDS ---
                 // Add as many names as you want (up to 4)
-                const startingNames = ["Hayley", "Kayla Kate", "Farley Kate", "Fami Moft"];
+                const startingNames = [];
                 
                 startingNames.forEach(name => {
                     const found = ALL_CHARS.find(c => c.name === name);
