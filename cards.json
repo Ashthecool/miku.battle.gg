@@ -72,15 +72,24 @@
         }
     }
   },
-  {
+{
     "name": "Jane",
-    "atk": 3,
-    "hp": 3,
-    "cost": 3,
+    "atk": 2,
+    "hp": 4,
+    "cost": 1,
     "rarity": "EPIC",
     "ability": "snipe",
     "series": "New Haven",
-    "description": "Sniper with precise targeting capabilities."
+    "description": "When played, reduces the cost of every /yellow/New Haven/ card in your hand by /white/2/ #cost#!",
+    "abilities": {
+      "onPlay": [
+        {
+          "type": "discountHandBySeries",
+          "series": "New Haven",
+          "amount": 2
+        }
+      ]
+    }
   },
   {
     "name": "Marija",
@@ -90,7 +99,7 @@
     "rarity": "LEGENDARY",
     "ability": "heal",
     "series": "New Haven",
-    "description": "Powerful healer with high health and healing abilities."
+    "description": "**{shake}/gold/The boss/{/shake}**, /green/heals/ you every time she attacks."
   },
   {
     "name": "Quinta Valentine",
@@ -100,7 +109,23 @@
     "rarity": "RARE",
     "ability": "snipe",
     "series": "New Haven",
-    "description": "Sniper specialist with deadly accuracy."
+    "description": "£{If Quinta knows she's got easy prey, she **/red/strikes/**!}£ /n---/n _10px_Deals 3 damage to all enemies if there's 2 or less enemies._",
+    "abilities": {
+      "scenario": {
+      "type": "unitCount",
+      "side": "enemy",
+      "operator": "less",
+      "threshold": 3,
+      "positive": 1,
+      "negative": 0
+    },
+    "onPlay": [
+      {
+        "type": "dealDamageAllEnemies",
+        "value": 3
+      }
+    ]
+    }
   },
   {
     "name": "Clara Garcia",
@@ -110,7 +135,21 @@
     "rarity": "UNCOMMON",
     "ability": "guard",
     "series": "New Haven",
-    "description": "Defensive guardian that protects allies."
+    "description": "A /green/guard/ that will tank hits, if Cheetor is played before this Clara will gain /lightgreen/+3 hp/.",
+    "abilities": {
+        "onPlay": [
+        { 
+          "type": "hpUpSelf", 
+          "value": "context.scenario * 3",
+          "scenario": {
+            "type": "or",
+            "cards": ["Cheetor"],
+            "positive": 1,
+            "negative": 0
+          }
+        }
+      ]
+      }
   },
   {
     "name": "Asuka",
@@ -120,7 +159,20 @@
     "rarity": "UNCOMMON",
     "ability": "echo",
     "series": "New Haven",
-    "description": "Echo fighter that can repeat actions."
+    "description": "Will do /darkred/2 damage/ #atk# to _13px_all_ enemies if there are **/white/New Haven/** cards on the enemy board.",
+    "abilities": {
+        "onPlay": [
+          { 
+            "type": "valuePerSeriesInEnemyBoard", 
+            "series": "New Haven", 
+            "value": 2 
+          },
+          { 
+            "type": "dealDamageAllEnemies", 
+            "value": "context.scenario" 
+          }
+        ]
+      }
   },
   {
     "name": "Cheetor",
@@ -128,9 +180,23 @@
     "hp": 4,
     "cost": 4,
     "rarity": "RARE",
-    "ability": "echo",
+    "ability": "haste",
     "series": "New Haven",
-    "description": "Echo warrior with enhanced abilities."
+    "description": "/pink/Haste/. If /white/Clara Garcia/ is in play, gain /darkred/+3 attack/ {shake}#atk#{/shake}.",
+    "abilities": {
+        "onPlay": [
+        { 
+          "type": "attackUpSelf", 
+          "value": "context.scenario * 3",
+          "scenario": {
+            "type": "or",
+            "cards": ["Clara Garcia"],
+            "positive": 1,
+            "negative": 0
+          }
+        }
+      ]
+      }
   },
   {
     "name": "Kijo",

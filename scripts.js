@@ -58,40 +58,61 @@
         }
 
         function evaluateScenario(scenario, unit, context = {}) {
-            if (!scenario) return 0;
+                    // If no scenario exists, return 1 (true) so default cards still trigger
+                    if (!scenario) return 1;
 
-            // 1. Determine which board to check
-            const side = scenario.side || context.side || 'player';
-            const board = (side === 'player') ? state.pBoard : state.eBoard;
-            
-            // 2. Get the list of names
-            const names = scenario.cards || scenario.cardNames || [];
-            if (!Array.isArray(names)) return 0;
+                    // 1. Determine which board to check
+                    // If side is specified in scenario, use that. 
+                    // If not specified, default to the acting unit's board (the board passed in context)
+                    const side = scenario.side || context.side || 'player';
+                    const board = (side === 'player') ? state.pBoard : state.eBoard;
+                    
+                    // --- Handle "unitCount" logic (e.g., "less than 2 units on the board") ---
+                    if (scenario.type === 'unitCount') {
+                        // Count how many non-empty slots exist on that board
+                        const currentCount = board.filter(slot => slot !== null).length;
+                        const threshold = scenario.threshold || 0;
+                        let success = false;
 
-            // 3. NEW: Count exactly how many of each target card are on the board
-            const counts = names.map(name => {
-                return board.filter(slot => slot && slot.card && slot.card.name === name).length;
-            });
+                        if (scenario.operator === 'less') success = currentCount < threshold;
+                        else if (scenario.operator === 'greater') success = currentCount > threshold;
+                        else if (scenario.operator === 'equal') success = currentCount === threshold;
 
-            // 4. Handle "Each" logic
-            if (scenario.type === 'each') {
-                // Sum the total occurrences across all target names
-                const totalMatches = counts.reduce((sum, count) => sum + count, 0);
-                const multiplier = resolveEffectValue(scenario.value || 1, unit.card, context);
-                return totalMatches * multiplier;
-            }
+                        return success ? (scenario.positive ?? 1) : (scenario.negative ?? 0);
+                    }
+                    // -------------------------------------------------------------------
 
-            // 5. Handle "And/Or" logic (success if count is greater than 0)
-            const success = (scenario.type === 'and' || scenario.type === 'all') 
-                ? counts.every(count => count > 0) 
-                : counts.some(count => count > 0);
+                    // 2. Get the list of names
+                    const names = scenario.cards || scenario.cardNames || [];
+                    if (!Array.isArray(names)) return 0;
 
-            return success ? (scenario.positive ?? 1) : (scenario.negative ?? 0);
-        }
+                    // 3. Count exactly how many of each target card are on the board
+                    const counts = names.map(name => {
+                        return board.filter(slot => slot && slot.card && slot.card.name === name).length;
+                    });
+
+                    // 4. Handle "Each" logic
+                    if (scenario.type === 'each') {
+                        // Sum the total occurrences across all target names
+                        const totalMatches = counts.reduce((sum, count) => sum + count, 0);
+                        const multiplier = resolveEffectValue(scenario.value || 1, unit.card, context);
+                        return totalMatches * multiplier;
+                    }
+
+                    // 5. Handle "And/Or" logic (success if count is greater than 0)
+                    const success = (scenario.type === 'and' || scenario.type === 'all') 
+                        ? counts.every(count => count > 0) 
+                        : counts.some(count => count > 0);
+
+                    return success ? (scenario.positive ?? 1) : (scenario.negative ?? 0);
+                }
 
         function applyCardEffect(effect, unit, context = {}) {
-            const card = unit.card;
-            const amount = resolveEffectValue(effect.value ?? effect.amount ?? effect.damage ?? 0, card, context);
+                // STOP effect here if the scenario didn't succeed (equals 0)
+                if (context.scenario === 0) return;
+
+                const card = unit.card;
+                const amount = resolveEffectValue(effect.value ?? effect.amount ?? effect.damage ?? 0, card, context);
 
             switch (effect.type) {
                 case 'healNexus':
@@ -195,7 +216,45 @@
                         animateCard(getSlotCard(context.side, context.slot), 'animate-heal');
                     }
                     break;
+                
+                case 'discountHandBySeries':
+                    let discountedCount = 0;
+                    
+                    // Loop through every card currently in the player's hand
+                    state.hand.forEach(handCard => {
+                        // Check if the card matches the target series
+                        if (handCard.series === effect.series) {
+                            // Reduce the cost, but use Math.max to ensure it never drops below 0
+                            handCard.cost = Math.max(0, handCard.cost - amount);
+                            discountedCount++;
+                        }
+                    });
+                    
+                    
+                    if (discountedCount > 0) {
+                        log(`${card.name.toUpperCase()} REDUCED THE COST OF ${discountedCount} ${effect.series.toUpperCase()} CARD(S).`);
+                        // REMOVED: updateBattleUI(); - dropOnSlot already handles this!
+                    }
+                    break;
+                    
+                case 'valuePerSeriesInEnemyBoard':
+                    let seriesTotal = 0;
+                    
+                    // 1. Check the opposing board based on who is acting
+                    const targetBoard = getOpposingBoard(context); // This makes it work for both Player and AI
+                    
+                    // 2. Loop through the units
+                    targetBoard.forEach(unit => {
+                        // 3. Drill down into unit.card.series
+                        if (unit && unit.card && unit.card.series === effect.series) {
+                            seriesTotal += amount;
+                        }
+                    });
 
+                    // 4. Store it in context so the NEXT effect in the array can use it
+                    context.scenario = seriesTotal; 
+                    log(`SCALING: Found ${seriesTotal / amount} units from ${effect.series}. Value is ${seriesTotal}.`);
+                    break;
             }
         }
 
@@ -478,7 +537,7 @@
 
             // --- FORCED MULTIPLE CARDS ---
                 // Add as many names as you want (up to 4)
-                const startingNames = [];
+                const startingNames = ["Asuka"];
                 
                 startingNames.forEach(name => {
                     const found = ALL_CHARS.find(c => c.name === name);
