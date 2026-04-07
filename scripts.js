@@ -144,9 +144,17 @@
                     break;
                 case 'silenceTarget':
                     if (context.target) {
+                        // Ensure status object exists
+                        if (!context.target.status) context.target.status = {};
+                        
                         context.target.status.silenced = true;
                         log(`${context.target.card.name.toUpperCase()} IS SILENCED.`);
-                        if (context.targetIdx !== undefined) animateCard(getSlotCard('enemy', context.targetIdx), 'animate-ability');
+                        
+                        // Trigger the animation if we have a slot index
+                        if (context.targetIdx !== undefined) {
+                            const side = context.side === 'player' ? 'enemy' : 'player'; // Target is usually on the opposite side
+                            animateCard(getSlotCard(side, context.targetIdx), 'animate-ability');
+                        }
                     }
                     break;
                 case 'disableTarget':
@@ -255,6 +263,62 @@
                     context.scenario = seriesTotal; 
                     log(`SCALING: Found ${seriesTotal / amount} units from ${effect.series}. Value is ${seriesTotal}.`);
                     break;
+
+                case 'spawnCard':
+                    const spawnName = effect.cardName;
+                    // Resolve the amount (allows for dynamic math or just a flat number)
+                    const spawnQty = resolveEffectValue(effect.amount || 1, card, context);
+                    // Find the card template from the main database
+                    const targetCard = ALL_CHARS.find(c => c.name === spawnName);
+                    
+                    if (targetCard) {
+                        let spawnedCount = 0;
+                        for (let i = 0; i < spawnQty; i++) {
+                            // Check if the player has room in their hand (max 4)
+                            if (state.hand.length < 4) { 
+                                state.hand.push({ ...targetCard, maxHp: targetCard.hp });
+                                spawnedCount++;
+                            }
+                        }
+                        if (spawnedCount > 0) {
+                            log(`${card.name.toUpperCase()} SPAWNED ${spawnedCount} ${spawnName.toUpperCase()}(S) INTO HAND.`);
+                            // updateBattleUI() is usually called by the parent function, 
+                            // but if you notice it not updating immediately, you can uncomment the line below:
+                            // updateBattleUI(); 
+                        } else {
+                            log(`HAND FULL. COULD NOT SPAWN ${spawnName.toUpperCase()}.`);
+                        }
+                    } else {
+                        console.warn(`Card to spawn not found: ${spawnName}`);
+                    }
+                    break;
+                case 'spawnOnBoard':
+                    const summonName = effect.cardName;
+                    const summonQty = resolveEffectValue(effect.amount || 1, card, context);
+                    const summonTemplate = ALL_CHARS.find(c => c.name === summonName);
+
+                    if (summonTemplate) {
+                        // FIX: Use the board provided in context (passed from triggerCardEvent)
+                        // If no board in context, default to player board
+                        const targetBoard = context.board || state.pBoard;
+                        const sideName = (targetBoard === state.pBoard) ? "PLAYER" : "ENEMY";
+
+                        let count = 0;
+                        for (let i = 0; i < summonQty; i++) {
+                            const emptyIdx = targetBoard.findIndex(slot => slot === null);
+                            if (emptyIdx !== -1) {
+                                targetBoard[emptyIdx] = { 
+                                    card: cloneCard(summonTemplate),
+                                    status: { exhausted: true, justPlayed: true, silenced: false } 
+                                };
+                                count++;
+                            }
+                        }
+                        if (count > 0) {
+                            log(`${card.name.toUpperCase()} SUMMONED ${count} ${summonName.toUpperCase()}(S) TO ${sideName} BOARD.`);
+                        }
+                    }
+                    break;
             }
         }
 
@@ -274,6 +338,7 @@
                 const response = await fetch('cards.json');
                 if (!response.ok) throw new Error('cards.json not found');
                 const data = await response.json();
+                // CLEAN UP: Just map the basic properties and the image function
                 ALL_CHARS = data.map(card => ({
                     ...card,
                     abilities: card.abilities || {},
@@ -281,8 +346,7 @@
                 }));
                 log(`Loaded cards.json (${data.length} cards)`);
             } catch (error) {
-                console.warn('cards.json could not be loaded, using built-in card list.', error);
-                log('cards.json failed to load; using fallback card data.');
+                console.warn('cards.json could not be loaded', error);
             }
         }
 
@@ -394,9 +458,12 @@
             // Update character count
             document.getElementById('vault-count').textContent = `${ALL_CHARS.length} Units Synchronized`;
 
+            // Only show cards that are NOT marked as Key Cards
+            const collectibleCards = ALL_CHARS.filter(c => !c.isKeyCard);
+
             // Group characters by series
             const seriesGroups = {};
-            ALL_CHARS.forEach(c => {
+            collectibleCards.forEach(c => {
                 if (!seriesGroups[c.series]) {
                     seriesGroups[c.series] = [];
                 }
@@ -426,67 +493,133 @@
             }
         }
 
-        function formatDescription(text) {
+        async function formatDescription(text) {
             if (!text) return 'No special abilities.';
+
+            // 1. Lore Links: [[DisplayText|ImageName1|ImageName2]]
+            const matches = [...text.matchAll(/\[\[(.*?)]]/g)];
             
-            // 1. Lore/Italic text: £{Text}£
-            text = text.replace(/£\{(.+?)\}£/g, '<span class="italic text-white/70" style="font-size: 11px;">$1</span>');
+            for (const match of matches) {
+                const content = match[1];
+                let displayText;
+                let imageNames = [];
 
-            // 2. Bold text with glow: **Text** (Cleaned up the color-dropping edge case)
-            text = text.replace(/\*\*([^\*]+)\*\*/g, '<span class="font-black text-white" style="text-shadow: rgba(255, 255, 255, 0.6) 0px 0px 10px;">$1</span>');
+                if (content.includes('|')) {
+                    const parts = content.split('|');
+                    displayText = parts[0].trim();
+                    imageNames = parts.slice(1).map(p => p.trim());
+                } else {
+                    displayText = content;
+                    imageNames = [content];
+                }
 
-            // 3. Dynamic Font Size: _16px_Text_
-            text = text.replace(/_(\d+px)_([^_]+)_/g, '<span style="font-size: $1; font-weight: bold;">$2</span>');
+                let imgTagsHTML = '';
+                for (const imgName of imageNames) {
+                    const linkedCard = typeof ALL_CHARS !== 'undefined' 
+                        ? ALL_CHARS.find(c => c.name.toLowerCase() === imgName.toLowerCase()) 
+                        : null;
+                    
+                    const imgPath = linkedCard ? await getCardImage(linkedCard.name) : '';
 
-            // 4. Color tags: /color/text/
-            text = text.replace(/\/([a-zA-Z]+)\/([^\/]+)\//g, '<span style="color: $1;">$2</span>');
+                    if (imgPath) {
+                        // We add the image and optionally the name below it inside the tooltip
+                        imgTagsHTML += `
+                            <div class="flex flex-col items-center flex-1">
+                                <img src="${imgPath}" onerror="this.src='https://miku.gg/favicon.ico'" 
+                                    class="w-full h-full object-cover rounded-md aspect-square">
+                            </div>`;
+                    }
+                }
 
-            // 5. Horizontal line: --- or /n---/n
-            text = text.replace(/(\/n)?---(\/n)?/g, '<div class="w-full h-px bg-gradient-to-r from-transparent via-purple-400/50 to-transparent my-1"></div>');
+                if (!imgTagsHTML) {
+                    imgTagsHTML = '<div class="p-2 text-[10px] text-white">?</div>';
+                }
 
-            // 6. Rainbow Text: [rainbow]Text[/rainbow]
-            text = text.replace(/\[rainbow\](.*?)\[\/rainbow\]/g, '<span class="font-black animate-pulse" style="background: linear-gradient(to right, rgb(239, 68, 68), rgb(234, 179, 8), rgb(34, 197, 94), rgb(59, 130, 246), rgb(168, 85, 247)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">$1</span>');
+                const customClass = content.includes('|') ? 'is-custom' : '';
+                const replacement = `
+                    <span class="lore-link ${customClass}">
+                        ${displayText}
+                        <div class="lore-tooltip flex gap-2 p-1">
+                            ${imgTagsHTML}
+                        </div>
+                    </span>`;
+                    
+                text = text.replace(match[0], replacement);
+            }
 
-            // 7. Shaking/Bouncing Text: {shake}Text{/shake}
-            text = text.replace(/\{shake\}(.*?)\{\/shake\}/g, '<span class="font-bold inline-block animate-bounce text-red-400">$1</span>');
+            // 2. Lore/Italic text: £{Text}£
+                text = text.replace(/£\{(.+?)\}£/g, '<span class="italic text-white/70" style="font-size: 11px;">$1</span>');
 
-            // 8. Stat Icons: #atk#, #hp#, #cost#
-            text = text.replace(/#atk#/g, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-red-500 inline-block align-middle mx-0.5"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"></polyline><line x1="13" x2="19" y1="19" y2="13"></line><line x1="16" x2="20" y1="16" y2="20"></line><line x1="19" x2="21" y1="21" y2="19"></line><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"></polyline><line x1="5" x2="9" y1="14" y2="18"></line><line x1="7" x2="4" y1="17" y2="20"></line><line x1="3" x2="5" y1="19" y2="21"></line></svg>`);
-            
-            text = text.replace(/#hp#/g, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-green-500 inline-block align-middle mx-0.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`);
-            
-            text = text.replace(/#cost#/g, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-indigo-400 inline-block align-middle mx-0.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`);
+                // 3. Bold text with glow: **Text**
+                text = text.replace(/\*\*([^\*]+)\*\*/g, '<span class="font-black text-white" style="text-shadow: rgba(255, 255, 255, 0.6) 0px 0px 10px;">$1</span>');
 
-            // 9. Replace newlines with <br>
-            text = text.replace(/\/n/g, '<br>');
+                // 4. Dynamic Font Size: _16px_Text_
+                text = text.replace(/_(\d+px)_([^_]+)_/g, '<span style="font-size: $1; font-weight: bold;">$2</span>');
+
+                // 5. Color tags: /color/text/
+                text = text.replace(/\/([a-zA-Z]+)\/([^\/]+)\//g, '<span style="color: $1;">$2</span>');
+
+                // 6. Horizontal line: --- or /n---/n
+                text = text.replace(/(\/n)?---(\/n)?/g, '<div class="w-full h-px bg-gradient-to-r from-transparent via-purple-400/50 to-transparent my-1"></div>');
+
+                // 7. Rainbow Text: [rainbow]Text[/rainbow]
+                text = text.replace(/\[rainbow\](.*?)\[\/rainbow\]/g, '<span class="font-black animate-pulse" style="background: linear-gradient(to right, rgb(239, 68, 68), rgb(234, 179, 8), rgb(34, 197, 94), rgb(59, 130, 246), rgb(168, 85, 247)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">$1</span>');
+
+                // 8. Shaking/Bouncing Text: {shake}Text{/shake}
+                text = text.replace(/\{shake\}(.*?)\{\/shake\}/g, '<span class="font-bold inline-block animate-bounce text-red-400">$1</span>');
+
+                // 9. Stat Icons: #atk#, #hp#, #cost#
+                text = text.replace(/#atk#/g, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-red-500 inline-block align-middle mx-0.5"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"></polyline><line x1="13" x2="19" y1="19" y2="13"></line><line x1="16" x2="20" y1="16" y2="20"></line><line x1="19" x2="21" y1="21" y2="19"></line><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"></polyline><line x1="5" x2="9" y1="14" y2="18"></line><line x1="7" x2="4" y1="17" y2="20"></line><line x1="3" x2="5" y1="19" y2="21"></line></svg>`);
+                text = text.replace(/#hp#/g, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-green-500 inline-block align-middle mx-0.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`);
+                text = text.replace(/#cost#/g, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-indigo-400 inline-block align-middle mx-0.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`);
+
+                // 10. Replace newlines with <br>
+                text = text.replace(/\/n/g, '<br>');
+
+                // 11. Hidden Text: {{hidden}}Text{{/hidden}}
+                // Use [\s\S] to match across multiple lines
+                text = text.replace(/\{\{hidden\}\}([\s\S]*?)\{\{\/hidden\}\}/g, '<span class="hidden-trigger">$1</span>');
 
             return text;
         }
 
         async function createCardUI(card, index, type, status = {}) {
+            // Ensure we await the image source
             const imageSrc = await card.image();
+            const descriptionHTML = await formatDescription(card.description);
+
             const div = document.createElement('div');
-            div.className = `card-nexus rarity-${card.rarity.toLowerCase()} ${status.exhausted ? 'is-exhausted' : ''} ${card.ability === 'guard' ? 'is-guard' : ''} ${type === 'preview' ? 'card-vault' : ''}`;
-            
+
+            // ADDED: ${status.silenced ? 'silenced' : ''} to the className list
+            div.className = `card-nexus rarity-${card.rarity.toLowerCase()} 
+                ${status.exhausted ? 'is-exhausted' : ''} 
+                ${status.silenced ? 'silenced' : ''} 
+                ${card.ability === 'guard' ? 'is-guard' : ''} 
+                ${type === 'preview' ? 'card-vault' : ''}`;
+                
             // Only apply entry animation once
             const anims = { 'COMMON': 'anim-common', 'UNCOMMON': 'anim-uncommon', 'RARE': 'anim-rare', 'EPIC': 'anim-epic', 'LEGENDARY': 'anim-legendary' };
             if(status.justPlayed) {
                 div.classList.add(anims[card.rarity]);
             }
 
+
+
             if(type !== 'preview') div.draggable = true;
 
-            div.innerHTML = `
-                ${type !== 'board' ? `<div class="cost-badge">${card.cost}</div>` : ''}
-                <div class="rarity-badge">${card.rarity}</div>
-                <div class="flex-1 flex flex-col items-center justify-center pointer-events-none">
-                    <img src="${imageSrc}" class="w-8 h-8 mb-1 object-contain" alt="${card.name}">
-                    <div class="text-[9px] font-black text-center leading-tight uppercase px-1">${card.name}</div>
-                </div>
-                <div class="description-box">${formatDescription(card.description)}</div>
-                <div class="stat-badge atk-badge">${card.atk}</div>
-                <div class="stat-badge hp-badge">${card.hp}</div>
-            `;
+                div.innerHTML = `
+                        ${type !== 'board' ? `<div class="cost-badge">${card.cost}</div>` : ''}
+                        <div class="rarity-badge">${card.rarity}</div>
+                        <div class="flex-1 flex flex-col items-center justify-center pointer-events-none">
+                            <img src="${imageSrc}" class="w-8 h-8 mb-1 object-contain" alt="${card.name}">
+                            <div class="text-[9px] font-black text-center leading-tight uppercase px-1">${card.name}</div>
+                        </div>
+                        <div class="description-box">${descriptionHTML}</div>
+                        <div class="stat-badge atk-badge">${card.atk}</div>
+                        <div class="stat-badge hp-badge">${card.hp}</div>
+                    `;
+
+            
 
             // ... (Keep your existing drag events) ...
                     if(type !== 'preview') {
@@ -525,6 +658,20 @@
                         }
                     });
 
+                    
+                    // Inside your UI update function (e.g., updateBattleUI)
+                    state.pBoard.forEach((u, i) => {
+                        const cardEl = document.querySelector(`.player-slot[data-idx="${i}"] .card`);
+                        if (u && cardEl) {
+                            // Toggle the 'silenced' class based on the unit's status
+                            if (u.status && u.status.silenced) {
+                                cardEl.classList.add('silenced');
+                            } else {
+                                cardEl.classList.remove('silenced');
+                            }
+                        }
+                    });
+
                     return div;
                 }
         ;
@@ -537,7 +684,7 @@
 
             // --- FORCED MULTIPLE CARDS ---
                 // Add as many names as you want (up to 4)
-                const startingNames = ["Asuka"];
+                const startingNames = ["Kayla Kate"];
                 
                 startingNames.forEach(name => {
                     const found = ALL_CHARS.find(c => c.name === name);
@@ -564,8 +711,11 @@
 
         function draw() {
             if (state.hand.length < 4) {
+
+                // Only show cards that are NOT marked as Key Cards
+                const collectibleCards = ALL_CHARS.filter(c => !c.isKeyCard);
                 // Correctly picks a random card from the array using a numeric index
-                const randomCard = ALL_CHARS[Math.floor(Math.random() * ALL_CHARS.length)];
+                const randomCard = collectibleCards[Math.floor(Math.random() * collectibleCards.length)];
                 if (randomCard) {
                     state.hand.push({ ...randomCard });
                 }
@@ -702,10 +852,12 @@
                 def.card.hp -= atk.card.atk;
                 atk.card.hp -= def.card.atk;
 
+                // Inside handleStrike in scripts.js
                 if(atk.card.ability === 'silence') {
                     def.status.silenced = true;
                     log(`${def.card.name} is SILENCED.`);
                     animateCard(defEl, 'animate-ability');
+                    // Ensure the UI refreshes to apply the new CSS class
                 }
 
                 if(atk.card.ability === 'berserk' && def.card.hp <= 0) {
@@ -816,10 +968,13 @@
             });
             updateBattleUI();
             log("ENEMY CYCLE STARTING...");
+            
+            // Only show cards that are NOT marked as Key Cards
+            const collectibleCards = ALL_CHARS.filter(c => !c.isKeyCard);
             setTimeout(() => {
                 const slot = state.eBoard.findIndex(s => s === null);
                 if(slot !== -1) {
-                    const c = ALL_CHARS[Math.floor(Math.random()*ALL_CHARS.length)];
+                    const c = collectibleCards[Math.floor(Math.random()*collectibleCards.length)];
                     const enemyUnit = { card: cloneCard(c), status: { exhausted: true, justPlayed: true } };
                     state.eBoard[slot] = enemyUnit;
                     triggerCardEvent('onPlay', enemyUnit, { slot, side: 'enemy', board: state.eBoard });
