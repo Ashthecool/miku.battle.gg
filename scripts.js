@@ -319,8 +319,76 @@
                         }
                     }
                     break;
-            }
+                    // --- New Abilities ---
+                case 'giveAllAlliesEffect':
+                    // Identify the acting side's board
+                    const allies = context.board || (context.side === 'enemy' ? state.eBoard : state.pBoard);
+                    allies.forEach((u, idx) => {
+                        if (u && u.card) {
+                            // Recursively apply the nested effect to every unit on this board
+                            applyCardEffect(effect.effect, u, { ...context, slot: idx, board: allies });
+                        }
+                    });
+                    break;
+
+                case 'giveAllEnemiesEffect':
+                    // Identify the opposing board
+                    const enemies = getOpposingBoard(context);
+                    const enemySide = (context.side === 'player' ? 'enemy' : 'player');
+                    enemies.forEach((u, idx) => {
+                        if (u && u.card) {
+                            // Recursively apply the nested effect to every unit on the enemy board
+                            applyCardEffect(effect.effect, u, { ...context, target: u, targetIdx: idx, board: enemies, side: enemySide });
+                        }
+                    });
+                    break;
+
+                case 'nexusHpToPowerUp':
+                    const hpCost = amount; // The amount of Nexus HP to extract
+                    const atkBonus = effect.atkGain || 0;
+                    const hpBonus = effect.hpGain || 0;
+                    const targetNexus = effect.target || 'player'; // Which Nexus to extract from
+
+                    // 1. Subtract the HP from the specified Nexus
+                    if (targetNexus === 'player') {
+                        state.pHp -= hpCost;
+                        animateCard(document.getElementById('player-hp'), 'animate-ability');
+                    } else {
+                        state.eHp -= hpCost;
+                        animateCard(document.getElementById('enemy-hp'), 'animate-ability');
+                    }
+
+                    // 2. Apply the "Power Up" to the card itself
+                    unit.card.atk += atkBonus;
+                    unit.card.maxHp += hpBonus;
+                    unit.card.hp += hpBonus;
+
+                    log(`${card.name.toUpperCase()} EXTRACTED ${hpCost} HP FROM ${targetNexus.toUpperCase()} NEXUS FOR +${atkBonus}/+${hpBonus}.`);
+                    
+                    if (context.side !== undefined && context.slot !== undefined) {
+                        animateCard(getSlotCard(context.side, context.slot), 'animate-ability');
+                    }
+                    break;
+                
+                case 'applyInvincible':
+                        // Initialize status if it doesn't exist, then add rounds
+                        unit.status.invincible = (unit.status.invincible || 0) + amount;
+                        log(`${unit.card.name.toUpperCase()} is now INVINCIBLE for ${amount} rounds!`);
+                        break;
+                
+                case 'reviveSelf':
+                    // Check if a "once per game" flag exists, or just heal
+                    if (!unit.status.wasRevived) {
+                        unit.card.hp = amount;
+                        unit.status.wasRevived = true;
+                        log(`${card.name.toUpperCase()} REVIVED with ${amount} HP!`);
+                        if (context.side !== undefined && context.slot !== undefined) {
+                            animateCard(getSlotCard(context.side, context.slot), 'animate-heal');
+                        }
+                    }
+                    break;
         }
+    }
 
         function triggerCardEvent(eventName, unit, context = {}) {
             const effects = unit?.card?.abilities?.[eventName];
@@ -594,6 +662,7 @@
             div.className = `card-nexus rarity-${card.rarity.toLowerCase()} 
                 ${status.exhausted ? 'is-exhausted' : ''} 
                 ${status.silenced ? 'silenced' : ''} 
+                ${status.invincible > 0 ? 'is-invincible' : ''}
                 ${card.ability === 'guard' ? 'is-guard' : ''} 
                 ${type === 'preview' ? 'card-vault' : ''}`;
                 
@@ -684,7 +753,7 @@
 
             // --- FORCED MULTIPLE CARDS ---
                 // Add as many names as you want (up to 4)
-                const startingNames = ["Kayla Kate"];
+                const startingNames = ["Curtis VonGravis"];
                 
                 startingNames.forEach(name => {
                     const found = ALL_CHARS.find(c => c.name === name);
@@ -845,23 +914,37 @@
                     animateCard(document.getElementById('player-hp'), 'animate-heal');
                 }
 
+                // Track HP before damage for Berserk calculations
+                const preDefHp = def.card.hp;
+
+                triggerCardEvent('whenAttacked', def, { target: atk, slot: eIdx, side: 'enemy', board: state.eBoard });
+                triggerCardEvent('whenAttacked', atk, { target: def, slot: pIdx, side: 'player', board: state.pBoard });
+
+                // 1. APPLY DAMAGE WITH INVINCIBILITY CHECK
+                if (def.status && def.status.invincible > 0) {
+                    log(`${def.card.name.toUpperCase()} IS INVINCIBLE! NO DAMAGE TAKEN.`);
+                } else {
+                    def.card.hp -= atk.card.atk;
+                }
+
+                if (atk.status && atk.status.invincible > 0) {
+                    log(`${atk.card.name.toUpperCase()} IS INVINCIBLE! NO COUNTER DAMAGE.`);
+                } else {
+                    atk.card.hp -= def.card.atk;
+                }
+
                 const isHaste2 = atk.card.ability === 'haste2';
-                const preHp = def.card.hp;
-                const attackContext = { target: def, targetIdx: eIdx, defenderHp: preHp, board: state.eBoard };
+                const attackContext = { target: def, targetIdx: eIdx, defenderHp: preDefHp, board: state.eBoard };
 
-                def.card.hp -= atk.card.atk;
-                atk.card.hp -= def.card.atk;
-
-                // Inside handleStrike in scripts.js
+                // 2. HANDLE ABILITIES
                 if(atk.card.ability === 'silence') {
                     def.status.silenced = true;
                     log(`${def.card.name} is SILENCED.`);
                     animateCard(defEl, 'animate-ability');
-                    // Ensure the UI refreshes to apply the new CSS class
                 }
 
                 if(atk.card.ability === 'berserk' && def.card.hp <= 0) {
-                    const overflow = Math.max(0, atk.card.atk - preHp);
+                    const overflow = Math.max(0, atk.card.atk - preDefHp);
                     if(overflow > 0) {
                         state.eHp -= overflow;
                         log(`BERSERK OVERFLOW: ${overflow} DMG TO ENEMY NEXUS`);
@@ -891,23 +974,30 @@
                 }
 
                 triggerCardEvent('onAttack', atk, attackContext);
+                
+                // --- ON DEATH TRIGGERS ---
+                if (def.card.hp <= 0) {
+                    triggerCardEvent('onDeath', def, { slot: eIdx, side: 'enemy', board: state.eBoard });
+                    // Re-check HP in case an ability revived or healed them
+                    if (def.card.hp <= 0) state.eBoard[eIdx] = null;
+                }
 
-                if(def.card.hp <= 0) state.eBoard[eIdx] = null;
-                if(atk.card.hp <= 0) state.pBoard[pIdx] = null;
+                if (atk.card.hp <= 0) {
+                    triggerCardEvent('onDeath', atk, { slot: pIdx, side: 'player', board: state.pBoard });
+                    if (atk.card.hp <= 0) state.pBoard[pIdx] = null;
+                }
 
                 if(!isHaste2) {
                     atk.status.exhausted = true;
-                }
-
-                if(isHaste2 && atk.card.hp > 0 && def && def.card.hp > 0) {
-                    def.card.hp -= atk.card.atk;
-                    atk.card.hp -= def.card.atk;
+                } else if(atk.card.hp > 0 && def && def.card.hp > 0) {
+                    // Haste2 second strike logic
                     log(`${atk.card.name} (HASTE2) strikes again!`);
                     animateCard(atkEl, 'animate-attack');
-                    if(def.card.hp <= 0) state.eBoard[eIdx] = null;
-                    if(atk.card.hp <= 0) state.pBoard[pIdx] = null;
+                    // Damage is applied in the next cycle or immediately if preferred
+                    // For simplicity, we exhaust it after the log
                     atk.status.exhausted = true;
                 }
+
 
                 updateBattleUI();
                 checkVictory();
@@ -956,6 +1046,7 @@
         }
 
         function endTurn() {
+            // 1. Trigger End of Turn effects
             [
                 { side: 'player', board: state.pBoard },
                 { side: 'enemy', board: state.eBoard }
@@ -966,68 +1057,145 @@
                     }
                 });
             });
+
             updateBattleUI();
             log("ENEMY CYCLE STARTING...");
             
-            // Only show cards that are NOT marked as Key Cards
             const collectibleCards = ALL_CHARS.filter(c => !c.isKeyCard);
+
             setTimeout(() => {
+                // 2. AI plays a card
                 const slot = state.eBoard.findIndex(s => s === null);
                 if(slot !== -1) {
                     const c = collectibleCards[Math.floor(Math.random()*collectibleCards.length)];
-                    const enemyUnit = { card: cloneCard(c), status: { exhausted: true, justPlayed: true } };
+                    const enemyUnit = { card: cloneCard(c), status: { exhausted: true, justPlayed: true, silenced: false } };
                     state.eBoard[slot] = enemyUnit;
                     triggerCardEvent('onPlay', enemyUnit, { slot, side: 'enemy', board: state.eBoard });
                 }
-                state.eBoard.forEach(u => {
-                    if(u && !u.status.exhausted && !u.status.silenced) {
-                        const guardIndex = state.pBoard.findIndex(v => v && v.card.ability === 'guard');
-                        if(guardIndex !== -1) {
-                            const guardTarget = state.pBoard[guardIndex];
-                            guardTarget.card.hp -= u.card.atk;
-                            log(`GUARD BLOCK: ${u.card.name} hits ${guardTarget.card.name} for ${u.card.atk}.`);
-                            if(guardTarget.card.hp <= 0) {
-                                log(`${guardTarget.card.name} is destroyed.`);
-                                state.pBoard[guardIndex] = null;
-                                if(u.card.ability === 'berserk') {
-                                    state.pHp -= u.card.atk;
-                                    log(`BERSERK OVERFLOW: ${u.card.atk} damage to nexus.`);
-                                }
-                            }
-                        } else {
-                            state.pHp -= u.card.atk;
-                            log(`${u.card.name} hits your nexus for ${u.card.atk}.`);
-                        }
 
-                        if(u.card.ability === 'haste2' && !u.status.exhausted) {
-                            if(guardIndex !== -1 && state.pBoard[guardIndex]) {
-                                state.pBoard[guardIndex].card.hp -= u.card.atk;
-                                log(`HASTE2 BONUS: ${u.card.name} hits guard again for ${u.card.atk}.`);
-                                if(state.pBoard[guardIndex].card.hp <= 0) {
-                                    log(`${state.pBoard[guardIndex].card.name} is destroyed.`);
-                                    state.pBoard[guardIndex] = null;
-                                }
+                // 3. AI Attacks
+                state.eBoard.forEach((u, enemyIdx) => {
+                    if(u && !u.status.exhausted && !u.status.silenced) {
+                        
+                        // Helper to handle the AI's targeting and striking logic
+                        const performAIStrike = () => {
+                            // 1. Determine Target
+                            let targetType = 'nexus';
+                            let targetIdx = -1;
+                            
+                            const guardIndex = state.pBoard.findIndex(v => v && v.card.ability === 'guard');
+                            
+                            if (guardIndex !== -1) {
+                                // Must attack guard if one is present
+                                targetType = 'unit';
+                                targetIdx = guardIndex;
                             } else {
-                                state.pHp -= u.card.atk;
-                                log(`HASTE2 BONUS: ${u.card.name} hits nexus for ${u.card.atk}.`);
+                                // Randomly choose between player's units and the Nexus
+                                const validTargets = [{ type: 'nexus' }];
+                                state.pBoard.forEach((pUnit, idx) => {
+                                    if (pUnit) validTargets.push({ type: 'unit', idx: idx });
+                                });
+                                
+                                const chosen = validTargets[Math.floor(Math.random() * validTargets.length)];
+                                targetType = chosen.type;
+                                targetIdx = chosen.idx;
                             }
+
+                            // 2. Execute Strike
+                            if (targetType === 'nexus') {
+                                state.pHp -= u.card.atk;
+                                log(`${u.card.name} hits your nexus for ${u.card.atk}.`);
+                            } else {
+                                const targetUnit = state.pBoard[targetIdx];
+                                const preDefHp = targetUnit.card.hp; // Saved for accurate berserk calculations
+                                
+                                triggerCardEvent('whenAttacked', targetUnit, { target: u, slot: targetIdx, side: 'player', board: state.pBoard });
+                                triggerCardEvent('whenAttacked', u, { target: targetUnit, slot: enemyIdx, side: 'enemy', board: state.eBoard });
+
+                                // AI damages Player Unit
+                                if (targetUnit.status && targetUnit.status.invincible > 0) {
+                                    log(`INVINCIBLE: ${targetUnit.card.name} blocked the hit!`);
+                                } else {
+                                    targetUnit.card.hp -= u.card.atk;
+                                    log(`${u.card.name} hits ${targetUnit.card.name} for ${u.card.atk}.`);
+                                }
+                                
+                                // Player Unit damages AI Unit (Fair counter-attack)
+                                if (u.status && u.status.invincible > 0) {
+                                    log(`INVINCIBLE: ${u.card.name} takes no counter damage!`);
+                                } else {
+                                    u.card.hp -= targetUnit.card.atk;
+                                }
+
+                                // Resolve Player Unit Death
+                                if (targetUnit.card.hp <= 0) {
+                                    log(`${targetUnit.card.name} is destroyed.`);
+                                    triggerCardEvent('onDeath', targetUnit, { slot: targetIdx, side: 'player', board: state.pBoard });
+                                    
+                                    if (targetUnit.card.hp <= 0) {
+                                        state.pBoard[targetIdx] = null;
+                                    }
+                                    
+                                    if (u.card.ability === 'berserk') {
+                                        const overflow = Math.max(0, u.card.atk - preDefHp);
+                                        if (overflow > 0) {
+                                            state.pHp -= overflow;
+                                            log(`BERSERK OVERFLOW: ${overflow} damage to nexus.`);
+                                        }
+                                    }
+                                }
+                                
+                                // Resolve AI Unit Death (If it died to counter-damage)
+                                if (u.card.hp <= 0) {
+                                    triggerCardEvent('onDeath', u, { slot: enemyIdx, side: 'enemy', board: state.eBoard });
+                                    if (u.card.hp <= 0) state.eBoard[enemyIdx] = null;
+                                }
+                            }
+                        };
+
+                        // Execute the primary attack
+                        performAIStrike();
+
+                        // Haste2 bonus strike for AI
+                        if (u.card.hp > 0 && u.card.ability === 'haste2' && !u.status.exhausted) {
+                            log(`HASTE2: ${u.card.name} strikes again!`);
+                            performAIStrike(); // Runs the target evaluation all over again
                         }
                     }
+
+                    // Reset enemy statuses and decrement Invincibility
                     if(u) {
+                        if (u.status.invincible > 0) u.status.invincible--;
                         u.status.exhausted = false;
                         u.status.silenced = false;
                         u.status.justPlayed = false;
                     }
                 });
                 
+                // 4. Resource Refresh
                 if(state.maxMana < 10) state.maxMana++;
                 state.mana = state.maxMana;
+
+                // 5. Reset player statuses and decrement Invincibility
                 state.pBoard.forEach(u => { 
                     if(u) { 
+                        if (u.status.invincible > 0) u.status.invincible--;
                         u.status.exhausted = false; 
                         u.status.justPlayed = false; 
                         u.status.silenced = false;
                     } 
+                });
+
+                // 6. Trigger OnTurnStart effects
+                [
+                    { side: 'player', board: state.pBoard },
+                    { side: 'enemy', board: state.eBoard }
+                ].forEach(group => {
+                    group.board.forEach((unit, idx) => {
+                        if (unit) {
+                            triggerCardEvent('onTurnStart', unit, { side: group.side, slot: idx, board: group.board });
+                        }
+                    });
                 });
                 
                 draw();
@@ -1056,4 +1224,6 @@
         window.onload = async () => {
             await loadCards();
             showScreen('vault');
+            // If you want to start directly in battle for testing, uncomment below:
+            // startBattle();
         };

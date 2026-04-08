@@ -592,3 +592,34 @@
             pointer-events: none;
             z-index: 10;
         }
+
+        /* Invincible Status Effect */
+        .card-nexus.is-invincible {
+            border-color: #ffd700 !important; /* Bright Gold */
+            box-shadow: 0 0 20px #ffd700, inset 0 0 10px rgba(255, 215, 0, 0.5);
+            filter: brightness(1.1) contrast(1.1);
+            transform: scale(1.02);
+            z-index: 10;
+        }
+
+        /* Shimmering shine animation */
+        .card-nexus.is-invincible::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(
+                45deg, 
+                transparent 40%, 
+                rgba(255, 255, 255, 0.6) 50%, 
+                transparent 60%
+            );
+            background-size: 200% 200%;
+            animation: divine-shimmer 2s infinite linear;
+            pointer-events: none;
+            border-radius: inherit;
+        }
+
+        @keyframes divine-shimmer {
+            0% { background-position: -150% -150%; }
+            100% { background-position: 150% 150%; }
+        }
