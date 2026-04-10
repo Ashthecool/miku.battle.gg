@@ -122,7 +122,7 @@
     "onPlay": [
       {
         "type": "dealDamageAllEnemies",
-        "value": 3
+        "value": "3 * context.scenario"
       }
     ]
     }
@@ -135,20 +135,20 @@
     "rarity": "UNCOMMON",
     "ability": "guard",
     "series": "New Haven",
-    "description": "A /green/guard/ that will tank hits, if Cheetor is played before this Clara will gain /lightgreen/+3 hp/.",
+    "description": "A /green/guard/ that will tank hits, if [[Cheetor]] is played before this Clara will gain /lightgreen/+3 hp/.",
     "abilities": {
         "onPlay": [
         { 
           "type": "hpUpSelf", 
-          "value": "context.scenario * 3",
-          "scenario": {
-            "type": "or",
-            "cards": ["Cheetor"],
-            "positive": 1,
-            "negative": 0
-          }
+          "value": "3 * context.scenario"
         }
-      ]
+      ],
+      "scenario": {
+        "type": "or",
+        "cards": ["Cheetor"],
+        "positive": 1,
+        "negative": 0
+      }
       }
   },
   {
@@ -165,7 +165,7 @@
           { 
             "type": "valuePerSeriesInEnemyBoard", 
             "series": "New Haven", 
-            "value": 2 
+            "value": "2 * context.scenario"
           },
           { 
             "type": "dealDamageAllEnemies", 
@@ -178,25 +178,99 @@
     "name": "Cheetor",
     "atk": 3,
     "hp": 4,
-    "cost": 4,
+    "cost": 3,
     "rarity": "RARE",
     "ability": "haste",
     "series": "New Haven",
-    "description": "/pink/Haste/. If /white/Clara Garcia/ is in play, gain /darkred/+3 attack/ {shake}#atk#{/shake}.",
+    "description": "/pink/Haste/. If [[Clara Garcia]] is in play, gain /darkred/+3 attack/ {shake}#atk#{/shake}.",
     "abilities": {
         "onPlay": [
         { 
           "type": "attackUpSelf", 
-          "value": "context.scenario * 3",
-          "scenario": {
+          "value": "3 * context.scenario"
+        }
+      ],
+        "scenario": {
             "type": "or",
             "cards": ["Clara Garcia"],
             "positive": 1,
             "negative": 0
-          }
         }
-      ]
       }
+  },
+  {
+    "name": "Doe",
+    "atk": 5,
+    "hp": 2,
+    "cost": 3,
+    "rarity": "EPIC",
+    "ability": "none",
+    "series": "New Haven",
+    "description": "**Doe** is great scientist, always happy to invent something new~ /n _10px_Starts of weak but gets stronger over time, /lightgreen/+2 hp/._",
+    "abilities": {
+        "onTurnEnd": [
+            {
+                "type": "hpUpSelf",
+                "value": 2
+            }
+        ]
+    }
+  },
+  {
+    "name": "Bucky",
+    "atk": 5,
+    "hp": 2,
+    "cost": 3,
+    "rarity": "RARE",
+    "ability": "haste",
+    "series": "New Haven",
+    "description": "**Bucky** is a fast and agile unit, always ready to strike first. /n _12px_Spawns [[Website Distract]] when spawned!_",
+    "abilities": {
+        "onPlay": [
+            {
+                "type": "spawnCard",
+                "cardName": "Website Distract",
+                "amount": 1
+            }
+        ]
+    }
+  },
+  {
+    "name": "Joey",
+    "atk": 1,
+    "hp": 3,
+    "cost": 2,
+    "rarity": "UNCOMMON",
+    "ability": "none",
+    "series": "New Haven",
+    "description": "Joey is a /n[flat*250]/mediumaquamarine/lazy/[/flat]/n kangaroo, when played /cyan/restores/ 3 of your mana!",
+    "abilities": {
+        "onPlay": [
+            {
+                "type": "gainMana",
+                "value": 3
+            }
+        ]
+    }
+  },
+  {
+    "name": "Jill",
+    "atk": 1,
+    "hp": 3,
+    "cost": 2,
+    "rarity": "UNCOMMON",
+    "ability": "none",
+    "series": "New Haven",
+    "description": "**Jill** lessens the /lightblue/cost/ of all cards in your hand by /lightblue/1/!",
+    "abilities": {
+        "onPlay": [
+            {
+                "type": "discountHandBySeries",
+                "value": "1",
+                "series": "all"
+            }
+        ]
+    }
   },
   {
     "name": "Kijo",
@@ -415,7 +489,8 @@
     "abilities": {
       "onAttack": [
         {
-          "type": "silenceTarget"
+          "type": "silenceTarget",
+          "value": 1
         }
       ]
     }
@@ -425,20 +500,36 @@
     "atk": 2,
     "hp": 2,
     "cost": 2,
-    "rarity": "RARE",
-    "ability": "silence",
+    "rarity": "UNCOMMON",
+    "ability": "none",
     "series": "Adoptive Life",
-    "description": "The Owner of ''Le gingembre'' cafe, /lightgreen/heals/ everyone when attacking for /lightgreen/1 hp/."
+    "description": "The Owner of ''Le gingembre'' cafe, /lightgreen/heals/ everyone when attacking for /lightgreen/1 hp/.",
+    "abilities":{
+      "onAttack":[
+        {
+          "type": "healAllies",
+          "value": "1"
+        }
+      ]
+    }
   },
   {
     "name": "Farley Kate",
     "atk": 2,
     "hp": 2,
     "cost": 2,
-    "rarity": "RARE",
-    "ability": "silence",
+    "rarity": "UNCOMMON",
+    "ability": "none",
     "series": "Adoptive Life",
-    "description": "/grey/Silencer/ that disables enemy abilities when attacking."
+    "description": "The Father of the /orange/Kates/! /n---/n /slateblue/+2 Splash Damage/.",
+    "abilities": {
+      "onAttack": [
+        {
+          "type": "splashAdjacent",
+          "damage": 2
+        }
+      ]
+    }
   },
   {
     "name": "Harris Kate",
@@ -913,7 +1004,22 @@
     "rarity": "UNCOMMON",
     "ability": "none",
     "series": "Dumb Super Fantasy RPG",
-    "description": "**GELO**: Her holy ice heals allies for /green/+4 HP/, though the freezing chill leaves them /red/unable to move for two turns/"
+    "description": "**GELO**: Her holy ice heals allies for /green/+4 HP/, though the freezing chill leaves them /red/unable to move for two turns/",
+    "abilities":{
+      "onPlay":[
+        {
+          "type": "healAllies",
+          "value": 4
+        },
+        {
+          "type": "giveAllAlliesEffect",
+          "effect": {
+            "type": "silenceTarget", 
+            "value": 2
+          }
+        }
+      ]
+    }
 },
 {
     "name": "Priest Pristo",
@@ -964,13 +1070,15 @@
       "onPlay": [
         {
           "type": "applyInvincible",
-          "value": 3,
-          "condition": {
-            "type": "or",
-            "cardName": "Curtis VonGravis"
-          }
+          "value": "3 * context.scenario"
         }
-      ]
+      ],
+      "scenario": {
+        "type": "or",
+        "cards": ["Curtis VonGravis"],
+        "positive": 1,
+        "negative": 0
+      }
     }
 },
 {
@@ -990,6 +1098,41 @@
         "atkGain": 1,
         "hpGain": 1,
         "target": "player"}
+      ]
+    }
+},
+{
+  "name": "Website Distract",
+  "atk": 1,
+  "hp": 3,
+  "cost": 1,
+  "rarity": "COMMON",
+  "ability": "guard",
+  "series": "New Haven",
+  "isKeyCard": true,
+  "description": "/red/_25px_Website Distract_/."
+},
+{
+    "name": "Pepita Pazzarella",
+    "atk": 2,
+    "hp": 3,
+    "cost": 2,
+    "rarity": "UNCOMMON",
+    "ability": "none",
+    "series": "Dumb Super Fantasy RPG",
+    "description": "**EMOZIO:** _10px_/silver/Gains +2 ATK/#atk# if she takes damage as her emotions [stretch*250]swing[/stretch]. If she doesn't attack will /green/add +1 HP to all allies/ (she's a really good cook)._",
+    "abilities": {
+      "whenAttacked":[
+        {
+          "type": "attackUpSelf",
+          "value": 2
+        }
+      ],
+      "whenNotAttack": [
+        {
+          "type": "healAllies",
+          "value": 1
+        }
       ]
     }
 }

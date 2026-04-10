@@ -100,7 +100,7 @@
                     }
 
                     // 5. Handle "And/Or" logic (success if count is greater than 0)
-                    const success = (scenario.type === 'and' || scenario.type === 'all') 
+                    const success = (scenario.type === 'and' || scenario.type === 'all' || scenario.type === 'or') 
                         ? counts.every(count => count > 0) 
                         : counts.some(count => count > 0);
 
@@ -143,16 +143,17 @@
                     animateCard(document.getElementById('enemy-hp'), 'animate-ability');
                     break;
                 case 'silenceTarget':
-                    if (context.target) {
-                        // Ensure status object exists
-                        if (!context.target.status) context.target.status = {};
+                    const targetUnit = context.target || unit; // Use the target if provided, else the unit itself
+                    if (targetUnit) {
+                        if (!targetUnit.status) targetUnit.status = {};
                         
-                        context.target.status.silenced = true;
-                        log(`${context.target.card.name.toUpperCase()} IS SILENCED.`);
+                        // Change from 'true' to 'amount' to support multiple turns
+                        targetUnit.status.silenced = (targetUnit.status.silenced || 0) + amount;
                         
-                        // Trigger the animation if we have a slot index
+                        log(`${targetUnit.card.name.toUpperCase()} IS SILENCED FOR ${amount} TURNS.`);
+                        
                         if (context.targetIdx !== undefined) {
-                            const side = context.side === 'player' ? 'enemy' : 'player'; // Target is usually on the opposite side
+                            const side = context.side === 'player' ? 'enemy' : 'player';
                             animateCard(getSlotCard(side, context.targetIdx), 'animate-ability');
                         }
                     }
@@ -225,23 +226,25 @@
                     }
                     break;
                 
-                case 'discountHandBySeries':
+                case 'discountHandBySeries': 
                     let discountedCount = 0;
+                    
+                    // THE TOGGLE: Check if the effect specifies 'all' or if the series property is missing
+                    const isAllCards = !effect.series || effect.series.toLowerCase() === 'all';
                     
                     // Loop through every card currently in the player's hand
                     state.hand.forEach(handCard => {
-                        // Check if the card matches the target series
-                        if (handCard.series === effect.series) {
-                            // Reduce the cost, but use Math.max to ensure it never drops below 0
+                        // Discount if it's set to "all", OR if the specific series matches
+                        if (isAllCards || handCard.series === effect.series) {
                             handCard.cost = Math.max(0, handCard.cost - amount);
                             discountedCount++;
                         }
                     });
                     
-                    
                     if (discountedCount > 0) {
-                        log(`${card.name.toUpperCase()} REDUCED THE COST OF ${discountedCount} ${effect.series.toUpperCase()} CARD(S).`);
-                        // REMOVED: updateBattleUI(); - dropOnSlot already handles this!
+                        // Change the log message based on the toggle
+                        const logText = isAllCards ? "CARD(S)" : `${effect.series.toUpperCase()} CARD(S)`;
+                        log(`${card.name.toUpperCase()} REDUCED THE COST OF ${discountedCount} ${logText}.`);
                     }
                     break;
                     
@@ -387,10 +390,30 @@
                         }
                     }
                     break;
+                case "gainMana":
+                    // 1. If the bonus 'amount' is already higher than our max cap, 
+                    // we let it 'overflow' by setting mana directly to that amount.
+                    if (amount > state.maxMana) {
+                        state.mana = amount;
+                    } else {
+                        // 2. Otherwise, we add it normally but stay capped at maxMana.
+                        state.mana = Math.min(state.maxMana, state.mana + amount);
+                    }
+
+                    log(`${card.name.toUpperCase()} RECOVERED ${amount} MANA (OVERFLOW ALLOWED).`);
+                    break;
+
+
         }
     }
 
         function triggerCardEvent(eventName, unit, context = {}) {
+            // ABORT if the unit has a silence counter greater than 0
+            if (unit?.status?.silenced > 0) {
+                console.log(`${unit.card.name} is silenced. Ability ${eventName} blocked.`);
+                return; 
+            }
+
             const effects = unit?.card?.abilities?.[eventName];
             if (!effects || !Array.isArray(effects)) return;
             const scenarioValue = evaluateScenario(unit?.card?.abilities?.scenario, unit, context);
@@ -648,6 +671,12 @@
                 // Use [\s\S] to match across multiple lines
                 text = text.replace(/\{\{hidden\}\}([\s\S]*?)\{\{\/hidden\}\}/g, '<span class="hidden-trigger">$1</span>');
 
+                // 12. Flatten (Vertical Scale) or stretch (Horizontal Scale)
+                // Using scaleY for flattening (vertical)
+                text = text.replace(/\[flat\*(\d+)\](.*?)\[\/flat\]/g, '<span style="display: inline-block; transform: scaleX($1%);">$2</span>');
+
+                // Using scaleX for stretching (horizontal)
+                text = text.replace(/\[stretch\*(\d+)\](.*?)\[\/stretch\]/g, '<span style="display: inline-block; transform: scaleY($1%);">$2</span>');
             return text;
         }
 
@@ -753,7 +782,7 @@
 
             // --- FORCED MULTIPLE CARDS ---
                 // Add as many names as you want (up to 4)
-                const startingNames = ["Curtis VonGravis"];
+                const startingNames = ["Pepita Pazzarella"];
                 
                 startingNames.forEach(name => {
                     const found = ALL_CHARS.find(c => c.name === name);
@@ -1053,7 +1082,14 @@
             ].forEach(group => {
                 group.board.forEach((unit, idx) => {
                     if (unit) {
+                        // Everyone triggers standard end-of-turn effects
                         triggerCardEvent('onTurnEnd', unit, { side: group.side, slot: idx, board: group.board });
+                        
+                        // ONLY check Player units for missed attacks here
+                        if (group.side === 'player' && unit.status.exhausted === false) {
+                            triggerCardEvent('whenNotAttack', unit, { side: group.side, slot: idx, board: group.board });
+                            log(`${unit.card.name.toUpperCase()} DID NOT ATTACK, TRIGGERING ABILITY!`);
+                        }
                     }
                 });
             });
@@ -1167,7 +1203,7 @@
                     if(u) {
                         if (u.status.invincible > 0) u.status.invincible--;
                         u.status.exhausted = false;
-                        u.status.silenced = false;
+                        if (u.status.silenced > 0) u.status.silenced--;
                         u.status.justPlayed = false;
                     }
                 });
@@ -1182,7 +1218,7 @@
                         if (u.status.invincible > 0) u.status.invincible--;
                         u.status.exhausted = false; 
                         u.status.justPlayed = false; 
-                        u.status.silenced = false;
+                        if (u.status.silenced > 0) u.status.silenced--;
                     } 
                 });
 
