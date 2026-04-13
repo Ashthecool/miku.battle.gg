@@ -1,26 +1,41 @@
 lucide.createIcons();
 
-        async function getCardImage(name) {
+        // ── Supabase config ────────────────────────────────────────────────────
+        const SUPABASE_URL    = 'https://djknvuaivmtudiecwztx.supabase.co';
+        const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRqa252dWFpdm10dWRpZWN3enR4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjEwMjU5NCwiZXhwIjoyMDkxNjc4NTk0fQ.Yj9bAcr8COoeALIP8eeZj9ubpBt6SZxllIXKPQncN2c'
+        const SUPABASE_KEY    = 'sb_publishable_oKPY6OIcovoVQlLZqBOLMg_skAxeCwp';
+        const SUPABASE_BUCKET = 'card-images';
+
+        // Build a Supabase public URL for a given file path inside the bucket
+        function supabaseImageUrl(filePath) {
+            return `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${filePath}`;
+        }
+
+        // Look up a card image from Supabase storage.
+        // First checks if the card object already has an image URL stored on it,
+        // then falls back to probing common filename patterns in the bucket.
+        async function getCardImage(nameOrCard) {
+            // Check if image exists AND is a string before returning it directly
+            if (nameOrCard && typeof nameOrCard === 'object' && typeof nameOrCard.image === 'string') {
+                return nameOrCard.image;
+            }
+
+            const name = typeof nameOrCard === 'object' ? nameOrCard.name : nameOrCard;
+            if (!name) return null;
+
             const base = name.toLowerCase().replace(/ /g, '-');
-            try {
-                const response = await fetch('images/' + base + '.jpg', { method: 'HEAD' });
-                if (response.ok) {
-                    return 'images/' + base + '.jpg';
-                }
-            } catch (e) {}
-            try {
-                const response = await fetch('images/' + base + '.jpeg', { method: 'HEAD' });
-                if (response.ok) {
-                    return 'images/' + base + '.jpeg';
-                }
-            } catch (e) {}
-            try {
-                const response = await fetch('images/' + base + '.png', { method: 'HEAD' });
-                if (response.ok) {
-                    return 'images/' + base + '.png';
-                }
-            } catch (e) {}
-            return null; // No image found
+            const exts = ['jpg', 'jpeg', 'png', 'webp'];
+
+            // Probe Supabase silently — no console errors on miss
+            for (const ext of exts) {
+                const url = supabaseImageUrl('images/' + base + '.' + ext);
+                try {
+                    const res = await fetch(url, { method: 'HEAD' });
+                    if (res.ok) return url;
+                } catch (e) {}
+            }
+
+            return null;
         }
 
         function cloneCard(card) {
@@ -875,20 +890,30 @@ lucide.createIcons();
         }
 
         async function loadCards() {
-            try {
-                const response = await fetch('cards.json');
-                if (!response.ok) throw new Error('cards.json not found');
-                const data = await response.json();
-                // CLEAN UP: Just map the basic properties and the image function
-                ALL_CHARS = data.map(card => ({
-                    ...card,
-                    abilities: card.abilities || {},
-                    image: async () => await getCardImage(card.name)
-                }));
-                log(`Loaded cards.json (${data.length} cards)`);
-            } catch (error) {
-                console.warn('cards.json could not be loaded', error);
+            // Try Supabase first, fall back to local cards.json
+            const SUPABASE_CARDS_URL = SUPABASE_URL + '/storage/v1/object/public/' + SUPABASE_BUCKET + '/cards.json';
+            const sources = [
+                SUPABASE_CARDS_URL + '?t=' + Date.now(),
+                'cards.json'
+            ];
+            for (const src of sources) {
+                try {
+                    const response = await fetch(src);
+                    if (!response.ok) continue;
+                    const data = await response.json();
+                    ALL_CHARS = data.map(card => {
+                        const cardObj = { ...card, abilities: card.abilities || {} };
+                        // FIX: Pass the raw 'card' data so getCardImage checks the original JSON string
+                        cardObj.image = async () => await getCardImage(card);
+                        return cardObj;
+                    });
+                    log('Loaded cards (' + data.length + ' cards) from ' + (src.includes('supabase') ? 'Supabase' : 'local'));
+                    return;
+                } catch (error) {
+                    console.warn('Could not load from', src, error);
+                }
             }
+            console.warn('cards.json could not be loaded from any source');
         }
 
         function spawnRollPopup(el, rolls, best, stat) {
@@ -1105,8 +1130,6 @@ lucide.createIcons();
                         : null;
                     
                     const imgPath = linkedCard ? await getCardImage(linkedCard.name) : '';
-                    console.log(imgPath)
-
                     if (imgPath) {
                         // We add the image and optionally the name below it inside the tooltip
                         imgTagsHTML += `
@@ -1207,7 +1230,7 @@ lucide.createIcons();
                         <div class="rarity-badge">${card.rarity}</div>
                         ${card.rank ? `<div class="rank-badge rank-${card.rank.toUpperCase()}">${card.rank.toUpperCase()}</div>` : ''}
                         <div class="card-title-container flex-1 flex flex-col items-center pointer-events-none">
-                            <img src="${imageSrc}" class="w-8 h-8 mb-1 object-contain" alt="${card.name}">
+                            ${imageSrc ? `<img src="${imageSrc}" class="w-8 h-8 mb-1 object-contain" alt="${card.name}">` : ''}
                             <div id="card-title" class="text-[9px] font-black leading-tight uppercase px-1">${card.name}</div>
                         </div>
                         <div class="description-box">${descriptionHTML}</div>
