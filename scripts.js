@@ -250,6 +250,27 @@ lucide.createIcons();
                         }
                     }
                     break;
+                case 'nurtureAllies':
+                    // Heals all allies by amount. If a unit is already at full HP, increases their max HP instead.
+                    for (let i = 0; i < context.board.length; i++) {
+                        const ally = context.board[i];
+                        if (ally && ally.card) {
+                            if (ally.card.hp >= ally.card.maxHp) {
+                                // Already full — grow their max HP
+                                ally.card.maxHp += amount;
+                                ally.card.hp += amount;
+                                log(`${ally.card.name.toUpperCase()} IS AT FULL HP — MAX HP INCREASED BY ${amount}!`);
+                                if (context.side !== undefined) animateCard(getSlotCard(context.side, i), 'animate-heal');
+                            } else {
+                                // Heal up to max, no overflow
+                                const healed = Math.min(ally.card.maxHp - ally.card.hp, amount);
+                                ally.card.hp += healed;
+                                log(`${ally.card.name.toUpperCase()} HEALS FOR ${healed}.`);
+                                if (context.side !== undefined) animateCard(getSlotCard(context.side, i), 'animate-heal');
+                            }
+                        }
+                    }
+                    break;
                 case 'dealDamageAllEnemies':
                     const enemyBoard = getOpposingBoard(context) || [];
                     const enemyBoardSide = getBoardSide(enemyBoard);
@@ -616,9 +637,15 @@ lucide.createIcons();
                     if (target === 'allAllies') {
                         allies.forEach((u, i) => { if (u && u.card) applyRoll(u, i); });
                     } else if (target === 'randomAlly') {
-                        const alive = allies.map((u, i) => u ? { u, i } : null).filter(Boolean);
-                        if (alive.length > 0) {
-                            const pick = alive[Math.floor(Math.random() * alive.length)];
+                        const allies = (context.board || []).map((u, i) => u ? { u, i } : null).filter(Boolean);
+
+                        // ❗ Optional: exclude self if you want TRUE ally behavior
+                        const filtered = allies.filter(x => x.u !== unit);
+
+                        const pool = filtered.length > 0 ? filtered : allies;
+
+                        if (pool.length > 0) {
+                            const pick = pool[Math.floor(Math.random() * pool.length)];
                             applyRoll(pick.u, pick.i);
                         }
                     } else {
@@ -684,22 +711,127 @@ lucide.createIcons();
                     }
                     break;
                 }
-                case 'manaSteal': {
-                    const stolen = Math.min(amount, state.maxMana - 1);
-                    if (stolen > 0) {
-                        state.maxMana -= stolen;
-                        state.mana = Math.min(state.mana + stolen, state.maxMana + stolen);
-                        log(`${card.name.toUpperCase()} STEALS ${stolen} MANA! POOL NOW ${state.maxMana}.`);
-                        animateCard(document.getElementById('mana-text'), 'animate-ability');
+
+                // ── Defector: steal a random enemy unit onto your board ──────────
+                case 'defector': {
+                    const enemyBd = getOpposingBoard(context);
+                    const ownBd   = context.board || (context.side === 'player' ? state.pBoard : state.eBoard);
+
+                    // Only works for the player (enemies don't have a playable board to receive onto)
+                    if (context.side !== 'player') break;
+
+                    const candidates = enemyBd
+                        .map((u, i) => u && u.card ? { u, i } : null)
+                        .filter(Boolean);
+                    if (candidates.length === 0) break;
+
+                    const pick       = candidates[Math.floor(Math.random() * candidates.length)];
+                    const emptyIdx   = ownBd.findIndex(slot => slot === null);
+                    if (emptyIdx === -1) {
+                        log(`${card.name.toUpperCase()} TRIED TO DEFECT AN ENEMY BUT YOUR BOARD IS FULL!`);
+                        break;
+                    }
+
+                    // Move unit
+                    const defected = pick.u;
+                    enemyBd[pick.i] = null;
+                    ownBd[emptyIdx] = {
+                        card:   defected.card,
+                        status: { exhausted: true, justPlayed: false, silenced: 0, invincible: 0 }
+                    };
+                    log(`${card.name.toUpperCase()} DEFECTS ${defected.card.name.toUpperCase()} TO YOUR SIDE!`);
+                    if (context.slot !== undefined)
+                        animateCard(getSlotCard(context.side, context.slot), 'animate-ability');
+                    break;
+                }
+
+                // ── Copycat: match the highest ATK ally on the board ─────────────
+                case 'copycat': {
+                    const copycatBoard = context.board || (context.side === 'player' ? state.pBoard : state.eBoard);
+                    let highest = 0;
+                    copycatBoard.forEach(u => {
+                        if (u && u.card && u !== unit && u.card.atk > highest) highest = u.card.atk;
+                    });
+                    if (highest > unit.card.atk) {
+                        log(`${card.name.toUpperCase()} COPIES THE HIGHEST ATK ON THE BOARD: ${highest}!`);
+                        unit.card.atk = highest;
+                        if (context.side !== undefined && context.slot !== undefined)
+                            animateCard(getSlotCard(context.side, context.slot), 'animate-ability');
+                    } else {
+                        log(`${card.name.toUpperCase()} FOUND NO STRONGER ALLY TO COPY.`);
                     }
                     break;
                 }
-                case 'manaDrain': {
-                    const drain = Math.min(amount, state.maxMana - 1); // never below 1
-                    if (drain > 0) {
-                        state.maxMana -= drain;
-                        log(`${card.name.toUpperCase()} DRAINED ${drain} MANA FROM THE FIELD! MAX IS NOW ${state.maxMana}.`);
-                        animateCard(document.getElementById('mana-text'), 'animate-ability');
+
+                // ── Martyr: on death, heal a random ally to full and give +2 ATK ─
+                case 'martyr': {
+                    const martyrBoard = context.board || (context.side === 'player' ? state.pBoard : state.eBoard);
+                    const martyrCandidates = martyrBoard
+                        .map((u, i) => u && u.card && u !== unit ? { u, i } : null)
+                        .filter(Boolean);
+                    if (martyrCandidates.length === 0) break;
+
+                    const martyrPick = martyrCandidates[Math.floor(Math.random() * martyrCandidates.length)];
+                    const martyrTarget = martyrPick.u;
+                    const martyrBonus = effect.atkBonus ?? 2;
+
+                    martyrTarget.card.hp     = martyrTarget.card.maxHp;
+                    martyrTarget.card.atk   += martyrBonus;
+                    log(`${card.name.toUpperCase()} MARTYRS ITSELF — ${martyrTarget.card.name.toUpperCase()} IS FULLY HEALED AND GAINS +${martyrBonus} ATK!`);
+                    if (context.side !== undefined)
+                        animateCard(getSlotCard(context.side, martyrPick.i), 'animate-heal');
+                    break;
+                }
+
+                // ── Echo Chamber: replay a random ally's onAttack ability ─────────
+                case 'echoChamber': {
+                    const echoBoard = context.board || (context.side === 'player' ? state.pBoard : state.eBoard);
+                    const echoCandidates = echoBoard
+                        .map((u, i) => u && u.card && u !== unit && u.card.abilities?.onAttack?.length ? { u, i } : null)
+                        .filter(Boolean);
+                    if (echoCandidates.length === 0) {
+                        log(`${card.name.toUpperCase()} FOUND NO ALLY WITH AN ATTACK ABILITY TO ECHO.`);
+                        break;
+                    }
+
+                    const echoPick   = echoCandidates[Math.floor(Math.random() * echoCandidates.length)];
+                    const echoTarget = echoPick.u;
+                    log(`${card.name.toUpperCase()} ECHOES ${echoTarget.card.name.toUpperCase()}'S ATTACK ABILITY!`);
+                    animateCard(getSlotCard(context.side, echoPick.i), 'animate-ability');
+                    await triggerCardEvent('onAttack', echoTarget, {
+                        ...context,
+                        slot: echoPick.i,
+                        board: echoBoard
+                    });
+                    break;
+                }
+
+                // ── Warding: reflect a portion of incoming damage back at attacker ─
+                // Called via whenAttacked. Reflects Math.ceil(incomingDmg * ratio) back.
+                case 'warding': {
+                    const attacker = context.target;
+                    if (!attacker || !attacker.card) break;
+
+                    const ratio      = effect.ratio ?? 0.5;
+                    const incoming   = attacker.card.atk;
+                    const reflected  = Math.ceil(incoming * ratio);
+
+                    attacker.card.hp -= reflected;
+                    log(`${card.name.toUpperCase()} WARDING — REFLECTS ${reflected} DMG BACK AT ${attacker.card.name.toUpperCase()}!`);
+
+                    const attackerSide = context.side === 'player' ? 'enemy' : 'player';
+                    const attackerIdx  = (attackerSide === 'enemy' ? state.eBoard : state.pBoard).indexOf(attacker);
+                    if (attackerIdx !== -1)
+                        animateCard(getSlotCard(attackerSide, attackerIdx), 'animate-hit-flicker');
+
+                    // Resolve attacker death from reflection
+                    if (attacker.card.hp <= 0) {
+                        const wardingBoard = attackerSide === 'enemy' ? state.eBoard : state.pBoard;
+                        log(`${attacker.card.name.toUpperCase()} DIES TO WARDING REFLECTION!`);
+                        await triggerCardEvent('onDeath', attacker, { slot: attackerIdx, side: attackerSide, board: wardingBoard });
+                        if (attacker.card.hp <= 0 && attackerIdx !== -1) {
+                            animateCardDeath(getSlotCard(attackerSide, attackerIdx), () => { wardingBoard[attackerIdx] = null; });
+                        }
                     }
                     break;
                 }
@@ -1354,7 +1486,7 @@ lucide.createIcons();
 
                 // 2. HANDLE ABILITIES
                 if(atk.card.ability === 'silence') {
-                    def.status.silenced = true;
+                    def.status.silenced = (def.status.silenced || 0) + 1;
                     log(`${def.card.name} is SILENCED.`);
                     animateCard(defEl, 'animate-ability');
                 }
@@ -1466,23 +1598,23 @@ lucide.createIcons();
 
         async function endTurn() {
             // 1. Trigger End of Turn effects
-            [
+            for (const group of [
                 { side: 'player', board: state.pBoard },
                 { side: 'enemy', board: state.eBoard }
-            ].forEach(async group => {
-                group.board.forEach(async (unit, idx) => {
+            ]) {
+                for (const [idx, unit] of group.board.entries()) {
                     if (unit) {
                         // Everyone triggers standard end-of-turn effects
                         await triggerCardEvent('onTurnEnd', unit, { side: group.side, slot: idx, board: group.board });
-                        
+
                         // ONLY check Player units for missed attacks here
                         if (group.side === 'player' && unit.status.exhausted === false) {
                             await triggerCardEvent('whenNotAttack', unit, { side: group.side, slot: idx, board: group.board });
                             log(`${unit.card.name.toUpperCase()} DID NOT ATTACK, TRIGGERING ABILITY!`);
                         }
                     }
-                });
-            });
+                }
+            }
 
             updateBattleUI();
             log("ENEMY CYCLE STARTING...");
@@ -1580,17 +1712,18 @@ lucide.createIcons();
                         };
 
                         // Execute the primary attack
-                        performAIStrike();
+                        await performAIStrike();
 
-                        const isEnergised = atk.status.energised;
+                        const isHaste2AI = u.card.ability === 'haste2';
+                        const isEnergised = u.status.energised;
 
-                        if (!isHaste2 && !isEnergised) {
-                            atk.status.exhausted = true;
-                        } else if ((isHaste2 || isEnergised) && atk.card.hp > 0 && def && def.card.hp > 0) {
-                            log(`${atk.card.name} ${isEnergised ? '(ENERGISED)' : '(HASTE2)'} strikes again!`);
-                            animateCard(atkEl, 'animate-attack');
-                            atk.status.exhausted = true;
+                        if (isHaste2AI || isEnergised) {
+                            if (u.card.hp > 0) {
+                                log(`${u.card.name} ${isEnergised ? '(ENERGISED)' : '(HASTE2)'} strikes again!`);
+                                await performAIStrike();
+                            }
                         }
+                        u.status.exhausted = true;
                     }
 
                     // Reset enemy statuses and decrement Invincibility
@@ -1617,16 +1750,16 @@ lucide.createIcons();
                 });
 
                 // 6. Trigger OnTurnStart effects
-                [
+                for (const group of [
                     { side: 'player', board: state.pBoard },
                     { side: 'enemy', board: state.eBoard }
-                ].forEach(async group => {
-                    group.board.forEach(async (unit, idx) => {
+                ]) {
+                    for (const [idx, unit] of group.board.entries()) {
                         if (unit) {
                             await triggerCardEvent('onTurnStart', unit, { side: group.side, slot: idx, board: group.board });
                         }
-                    });
-                });
+                    }
+                };
                 
                 draw();
                 updateBattleUI();
@@ -2778,14 +2911,14 @@ async function endTurn() {
     });
 
     // ── 9. onTurnStart triggers for new turn ──────────────────────────────
-    [
+    for (const group of [
         { side: 'player', board: state.pBoard },
         { side: 'enemy',  board: state.eBoard }
-    ].forEach(async group => {
-        group.board.forEach(async (unit, idx) => {
+    ]) {
+        for (const [idx, unit] of group.board.entries()) {
             if (unit) await triggerCardEvent('onTurnStart', unit, { side: group.side, slot: idx, board: group.board });
-        });
-    });
+        }
+    }
 
     // ── 10. Draw + closing dialogue ───────────────────────────────────────
     draw();
@@ -2827,4 +2960,3 @@ async function endTurn() {
             // If you want to start directly in battle for testing, uncomment below:
             // startBattle();
         };
-
