@@ -28,7 +28,7 @@ lucide.createIcons();
 
             // Probe Supabase silently — no console errors on miss
             for (const ext of exts) {
-                const url = supabaseImageUrl('images/' + base + '.' + ext);
+                const url = supabaseImageUrl(base + '.' + ext);
                 try {
                     const res = await fetch(url, { method: 'HEAD' });
                     if (res.ok) return url;
