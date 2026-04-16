@@ -1314,7 +1314,7 @@ lucide.createIcons();
 
             // --- FORCED MULTIPLE CARDS ---
                 // Add as many names as you want (up to 4)
-                const startingNames = ["Brizz"];
+                const startingNames = [];
                 
                 startingNames.forEach(name => {
                     const found = ALL_CHARS.find(c => c.name === name);
