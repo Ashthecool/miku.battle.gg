@@ -346,6 +346,34 @@
             overflow: visible;
         }
 
+        /* 
+         * Apply filter effects to the arena's background using a pseudo-element.
+         * This creates a separate background layer that can be blurred/grayscale
+         * while keeping child content unaffected.
+         */
+        #screen-arena::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('background1.svg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: blur(5px) brightness(0.8) grayscale(0.5) opacity(20%);
+            z-index: -1;
+            pointer-events: none;
+            /* animation: background-animation 9s ease-in-out infinite;
+        }
+
+        @keyframes background-animation {
+            0%, 100% { filter: blur(5px) brightness(0.8) grayscale(0.5) opacity(20%); transform: scale(1); }
+            50% { filter: blur(7px) brightness(0.9) grayscale(0.3) opacity(25%); transform: scale(1.05); }
+        } */
+        }
+
         .slot {
             position: relative;
             z-index: 5;
